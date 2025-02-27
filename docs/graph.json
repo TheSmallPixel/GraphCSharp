@@ -1,247 +1,274 @@
 {
-  "Nodes": [
+  "nodes": [
     {
-      "Id": "CodeAnalysisTool",
-      "Group": "namespace",
-      "Label": "CodeAnalysisTool"
+      "id": "CodeAnalysisTool",
+      "group": "namespace",
+      "label": "CodeAnalysisTool"
     },
     {
-      "Id": "CodeAnalysisTool.CodeGraphWalker",
-      "Group": "class",
-      "Label": "CodeGraphWalker"
+      "id": "CodeAnalysisTool.CodeGraphWalker",
+      "group": "class",
+      "label": "CodeGraphWalker"
     },
     {
-      "Id": "CodeAnalysisTool.D3Graph",
-      "Group": "class",
-      "Label": "D3Graph"
+      "id": "CodeAnalysisTool.D3Graph",
+      "group": "class",
+      "label": "D3Graph"
     },
     {
-      "Id": "CodeAnalysisTool.D3Node",
-      "Group": "class",
-      "Label": "D3Node"
+      "id": "CodeAnalysisTool.D3Node",
+      "group": "class",
+      "label": "D3Node"
     },
     {
-      "Id": "CodeAnalysisTool.D3Link",
-      "Group": "class",
-      "Label": "D3Link"
+      "id": "CodeAnalysisTool.D3Link",
+      "group": "class",
+      "label": "D3Link"
     },
     {
-      "Id": "CodeAnalysisTool.Program",
-      "Group": "class",
-      "Label": "Program"
+      "id": "CodeAnalysisTool.Program",
+      "group": "class",
+      "label": "Program"
     },
     {
-      "Id": "CodeAnalysisTool.CodeGraphWalker.Visit",
-      "Group": "method",
-      "Label": "Visit"
+      "id": "CodeAnalysisTool.LowercaseNamingStrategy",
+      "group": "class",
+      "label": "LowercaseNamingStrategy"
     },
     {
-      "Id": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration",
-      "Group": "method",
-      "Label": "VisitNamespaceDeclaration"
+      "id": "CodeAnalysisTool.CodeGraphWalker.Visit",
+      "group": "method",
+      "label": "Visit"
     },
     {
-      "Id": "System.Collections.Generic.HashSet.Add",
-      "Group": "method",
-      "Label": "Add"
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration",
+      "group": "method",
+      "label": "VisitNamespaceDeclaration"
     },
     {
-      "Id": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
-      "Group": "method",
-      "Label": "VisitClassDeclaration"
+      "id": "System.Collections.Generic.HashSet.Add",
+      "group": "method",
+      "label": "Add"
     },
     {
-      "Id": "System.String.IsNullOrEmpty",
-      "Group": "method",
-      "Label": "IsNullOrEmpty"
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "group": "method",
+      "label": "VisitClassDeclaration"
     },
     {
-      "Id": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
-      "Group": "method",
-      "Label": "VisitMethodDeclaration"
+      "id": "System.String.IsNullOrEmpty",
+      "group": "method",
+      "label": "IsNullOrEmpty"
     },
     {
-      "Id": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
-      "Group": "method",
-      "Label": "VisitInvocationExpression"
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
+      "group": "method",
+      "label": "VisitMethodDeclaration"
     },
     {
-      "Id": "System.Collections.Generic.HashSet.Contains",
-      "Group": "method",
-      "Label": "Contains"
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "group": "method",
+      "label": "VisitInvocationExpression"
     },
     {
-      "Id": "System.Collections.Generic.Dictionary.ContainsKey",
-      "Group": "method",
-      "Label": "ContainsKey"
+      "id": "System.Collections.Generic.HashSet.Contains",
+      "group": "method",
+      "label": "Contains"
     },
     {
-      "Id": "System.Collections.Generic.List.Contains",
-      "Group": "method",
-      "Label": "Contains"
+      "id": "System.Collections.Generic.Dictionary.ContainsKey",
+      "group": "method",
+      "label": "ContainsKey"
     },
     {
-      "Id": "System.Collections.Generic.List.Add",
-      "Group": "method",
-      "Label": "Add"
+      "id": "System.Collections.Generic.List.Contains",
+      "group": "method",
+      "label": "Contains"
     },
     {
-      "Id": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "Group": "method",
-      "Label": "GetGraph"
+      "id": "System.Collections.Generic.List.Add",
+      "group": "method",
+      "label": "Add"
     },
     {
-      "Id": "System.String.Split",
-      "Group": "method",
-      "Label": "Split"
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "group": "method",
+      "label": "GetGraph"
     },
     {
-      "Id": "System.String.LastIndexOf",
-      "Group": "method",
-      "Label": "LastIndexOf"
+      "id": "System.String.Split",
+      "group": "method",
+      "label": "Split"
     },
     {
-      "Id": "System.String.Substring",
-      "Group": "method",
-      "Label": "Substring"
+      "id": "System.String.LastIndexOf",
+      "group": "method",
+      "label": "LastIndexOf"
     },
     {
-      "Id": "CodeAnalysisTool.Program.Main",
-      "Group": "method",
-      "Label": "Main"
+      "id": "System.String.Substring",
+      "group": "method",
+      "label": "Substring"
     },
     {
-      "Id": "System.IO.Directory.GetFiles",
-      "Group": "method",
-      "Label": "GetFiles"
+      "id": "CodeAnalysisTool.Program.Main",
+      "group": "method",
+      "label": "Main"
     },
     {
-      "Id": "System.IO.Directory.CreateDirectory",
-      "Group": "method",
-      "Label": "CreateDirectory"
+      "id": "System.IO.Directory.GetFiles",
+      "group": "method",
+      "label": "GetFiles"
     },
     {
-      "Id": "System.IO.Path.Combine",
-      "Group": "method",
-      "Label": "Combine"
+      "id": "System.IO.Directory.CreateDirectory",
+      "group": "method",
+      "label": "CreateDirectory"
+    },
+    {
+      "id": "System.IO.Path.Combine",
+      "group": "method",
+      "label": "Combine"
+    },
+    {
+      "id": "CodeAnalysisTool.LowercaseNamingStrategy.ResolvePropertyName",
+      "group": "method",
+      "label": "ResolvePropertyName"
+    },
+    {
+      "id": "System.String.ToLowerInvariant",
+      "group": "method",
+      "label": "ToLowerInvariant"
     }
   ],
-  "Links": [
+  "links": [
     {
-      "Source": "CodeAnalysisTool",
-      "Target": "CodeAnalysisTool.CodeGraphWalker"
+      "source": "CodeAnalysisTool",
+      "target": "CodeAnalysisTool.CodeGraphWalker"
     },
     {
-      "Source": "CodeAnalysisTool",
-      "Target": "CodeAnalysisTool.D3Graph"
+      "source": "CodeAnalysisTool",
+      "target": "CodeAnalysisTool.D3Graph"
     },
     {
-      "Source": "CodeAnalysisTool",
-      "Target": "CodeAnalysisTool.D3Node"
+      "source": "CodeAnalysisTool",
+      "target": "CodeAnalysisTool.D3Node"
     },
     {
-      "Source": "CodeAnalysisTool",
-      "Target": "CodeAnalysisTool.D3Link"
+      "source": "CodeAnalysisTool",
+      "target": "CodeAnalysisTool.D3Link"
     },
     {
-      "Source": "CodeAnalysisTool",
-      "Target": "CodeAnalysisTool.Program"
+      "source": "CodeAnalysisTool",
+      "target": "CodeAnalysisTool.Program"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker",
-      "Target": "CodeAnalysisTool.CodeGraphWalker.Visit"
+      "source": "CodeAnalysisTool",
+      "target": "CodeAnalysisTool.LowercaseNamingStrategy"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker",
-      "Target": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration"
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.Visit"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker",
-      "Target": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration"
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker",
-      "Target": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration"
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker",
-      "Target": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression"
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker",
-      "Target": "CodeAnalysisTool.CodeGraphWalker.GetGraph"
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression"
     },
     {
-      "Source": "CodeAnalysisTool.Program",
-      "Target": "CodeAnalysisTool.Program.Main"
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration",
-      "Target": "System.Collections.Generic.HashSet.Add"
+      "source": "CodeAnalysisTool.Program",
+      "target": "CodeAnalysisTool.Program.Main"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
-      "Target": "System.String.IsNullOrEmpty"
+      "source": "CodeAnalysisTool.LowercaseNamingStrategy",
+      "target": "CodeAnalysisTool.LowercaseNamingStrategy.ResolvePropertyName"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
-      "Target": "System.String.IsNullOrEmpty"
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration",
+      "target": "System.Collections.Generic.HashSet.Add"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
-      "Target": "System.Collections.Generic.HashSet.Contains"
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "target": "System.String.IsNullOrEmpty"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
-      "Target": "System.Collections.Generic.HashSet.Add"
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
+      "target": "System.String.IsNullOrEmpty"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
-      "Target": "System.Collections.Generic.Dictionary.ContainsKey"
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "System.Collections.Generic.HashSet.Contains"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
-      "Target": "System.Collections.Generic.List.Contains"
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "System.Collections.Generic.HashSet.Add"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
-      "Target": "System.Collections.Generic.List.Add"
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "System.Collections.Generic.Dictionary.ContainsKey"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "Target": "System.Collections.Generic.List.Add"
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "System.Collections.Generic.List.Contains"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "Target": "System.String.Split"
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "System.Collections.Generic.List.Add"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "Target": "System.String.LastIndexOf"
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.List.Add"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "Target": "System.String.Substring"
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.String.Split"
     },
     {
-      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "Target": "System.Collections.Generic.HashSet.Contains"
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.String.LastIndexOf"
     },
     {
-      "Source": "CodeAnalysisTool.Program.Main",
-      "Target": "System.IO.Directory.GetFiles"
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.String.Substring"
     },
     {
-      "Source": "CodeAnalysisTool.Program.Main",
-      "Target": "CodeAnalysisTool.CodeGraphWalker.GetGraph"
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Contains"
     },
     {
-      "Source": "CodeAnalysisTool.Program.Main",
-      "Target": "System.IO.Directory.CreateDirectory"
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "System.IO.Directory.GetFiles"
     },
     {
-      "Source": "CodeAnalysisTool.Program.Main",
-      "Target": "System.IO.Path.Combine"
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "System.IO.Directory.CreateDirectory"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "System.IO.Path.Combine"
+    },
+    {
+      "source": "CodeAnalysisTool.LowercaseNamingStrategy.ResolvePropertyName",
+      "target": "System.String.ToLowerInvariant"
     }
   ]
 }
