@@ -211,7 +211,7 @@ namespace CodeAnalysisTool
                         graph.Links.Add(new D3Link
                         {
                             Source = ns,
-                            Target = cls
+                            Target = cls,
                             Type = "containment"
                         });
                     }
@@ -230,7 +230,7 @@ namespace CodeAnalysisTool
                         graph.Links.Add(new D3Link
                         {
                             Source = cls,
-                            Target = method
+                            Target = method,
                             Type = "containment"
                         });
                     }
