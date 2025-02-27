@@ -1,0 +1,247 @@
+{
+  "Nodes": [
+    {
+      "Id": "CodeAnalysisTool",
+      "Group": "namespace",
+      "Label": "CodeAnalysisTool"
+    },
+    {
+      "Id": "CodeAnalysisTool.CodeGraphWalker",
+      "Group": "class",
+      "Label": "CodeGraphWalker"
+    },
+    {
+      "Id": "CodeAnalysisTool.D3Graph",
+      "Group": "class",
+      "Label": "D3Graph"
+    },
+    {
+      "Id": "CodeAnalysisTool.D3Node",
+      "Group": "class",
+      "Label": "D3Node"
+    },
+    {
+      "Id": "CodeAnalysisTool.D3Link",
+      "Group": "class",
+      "Label": "D3Link"
+    },
+    {
+      "Id": "CodeAnalysisTool.Program",
+      "Group": "class",
+      "Label": "Program"
+    },
+    {
+      "Id": "CodeAnalysisTool.CodeGraphWalker.Visit",
+      "Group": "method",
+      "Label": "Visit"
+    },
+    {
+      "Id": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration",
+      "Group": "method",
+      "Label": "VisitNamespaceDeclaration"
+    },
+    {
+      "Id": "System.Collections.Generic.HashSet.Add",
+      "Group": "method",
+      "Label": "Add"
+    },
+    {
+      "Id": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "Group": "method",
+      "Label": "VisitClassDeclaration"
+    },
+    {
+      "Id": "System.String.IsNullOrEmpty",
+      "Group": "method",
+      "Label": "IsNullOrEmpty"
+    },
+    {
+      "Id": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
+      "Group": "method",
+      "Label": "VisitMethodDeclaration"
+    },
+    {
+      "Id": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "Group": "method",
+      "Label": "VisitInvocationExpression"
+    },
+    {
+      "Id": "System.Collections.Generic.HashSet.Contains",
+      "Group": "method",
+      "Label": "Contains"
+    },
+    {
+      "Id": "System.Collections.Generic.Dictionary.ContainsKey",
+      "Group": "method",
+      "Label": "ContainsKey"
+    },
+    {
+      "Id": "System.Collections.Generic.List.Contains",
+      "Group": "method",
+      "Label": "Contains"
+    },
+    {
+      "Id": "System.Collections.Generic.List.Add",
+      "Group": "method",
+      "Label": "Add"
+    },
+    {
+      "Id": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "Group": "method",
+      "Label": "GetGraph"
+    },
+    {
+      "Id": "System.String.Split",
+      "Group": "method",
+      "Label": "Split"
+    },
+    {
+      "Id": "System.String.LastIndexOf",
+      "Group": "method",
+      "Label": "LastIndexOf"
+    },
+    {
+      "Id": "System.String.Substring",
+      "Group": "method",
+      "Label": "Substring"
+    },
+    {
+      "Id": "CodeAnalysisTool.Program.Main",
+      "Group": "method",
+      "Label": "Main"
+    },
+    {
+      "Id": "System.IO.Directory.GetFiles",
+      "Group": "method",
+      "Label": "GetFiles"
+    },
+    {
+      "Id": "System.IO.Directory.CreateDirectory",
+      "Group": "method",
+      "Label": "CreateDirectory"
+    },
+    {
+      "Id": "System.IO.Path.Combine",
+      "Group": "method",
+      "Label": "Combine"
+    }
+  ],
+  "Links": [
+    {
+      "Source": "CodeAnalysisTool",
+      "Target": "CodeAnalysisTool.CodeGraphWalker"
+    },
+    {
+      "Source": "CodeAnalysisTool",
+      "Target": "CodeAnalysisTool.D3Graph"
+    },
+    {
+      "Source": "CodeAnalysisTool",
+      "Target": "CodeAnalysisTool.D3Node"
+    },
+    {
+      "Source": "CodeAnalysisTool",
+      "Target": "CodeAnalysisTool.D3Link"
+    },
+    {
+      "Source": "CodeAnalysisTool",
+      "Target": "CodeAnalysisTool.Program"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker",
+      "Target": "CodeAnalysisTool.CodeGraphWalker.Visit"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker",
+      "Target": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker",
+      "Target": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker",
+      "Target": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker",
+      "Target": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker",
+      "Target": "CodeAnalysisTool.CodeGraphWalker.GetGraph"
+    },
+    {
+      "Source": "CodeAnalysisTool.Program",
+      "Target": "CodeAnalysisTool.Program.Main"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration",
+      "Target": "System.Collections.Generic.HashSet.Add"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "Target": "System.String.IsNullOrEmpty"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
+      "Target": "System.String.IsNullOrEmpty"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "Target": "System.Collections.Generic.HashSet.Contains"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "Target": "System.Collections.Generic.HashSet.Add"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "Target": "System.Collections.Generic.Dictionary.ContainsKey"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "Target": "System.Collections.Generic.List.Contains"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "Target": "System.Collections.Generic.List.Add"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "Target": "System.Collections.Generic.List.Add"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "Target": "System.String.Split"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "Target": "System.String.LastIndexOf"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "Target": "System.String.Substring"
+    },
+    {
+      "Source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "Target": "System.Collections.Generic.HashSet.Contains"
+    },
+    {
+      "Source": "CodeAnalysisTool.Program.Main",
+      "Target": "System.IO.Directory.GetFiles"
+    },
+    {
+      "Source": "CodeAnalysisTool.Program.Main",
+      "Target": "CodeAnalysisTool.CodeGraphWalker.GetGraph"
+    },
+    {
+      "Source": "CodeAnalysisTool.Program.Main",
+      "Target": "System.IO.Directory.CreateDirectory"
+    },
+    {
+      "Source": "CodeAnalysisTool.Program.Main",
+      "Target": "System.IO.Path.Combine"
+    }
+  ]
+}
