@@ -8,6 +8,18 @@
     body {
       font-family: sans-serif;
     }
+    html, body {
+      margin: 0; 
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden; /* no scrollbars */
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block; /* remove default spacing */
+    }
     .link {
       stroke: #999;
       stroke-opacity: 0.6;
@@ -34,9 +46,7 @@
       .catch(err => console.error("Fetch error:", err));
 
     function drawGraph(graph) {
-      const width = 960,
-            height = 600;
-
+      const width = window.innerWidth, height = window.innerHeight;
       // Create an SVG
       const svg = d3.select("#chart")
         .append("svg")
@@ -49,6 +59,16 @@
         class:     "#ff7f0e",
         method:    "#2ca02c"
       };
+
+      const zoomBehavior = d3.zoom()
+        .scaleExtent([0.1, 10])  // optional limit: from 10% to 1000% zoom
+        .on("zoom", (event) => {
+          // 2) The "zoom" handler updates the transform
+          gContainer.attr("transform", event.transform);
+        });
+
+      // 3) Attach the zoom to the SVG
+      svg.call(zoomBehavior);
 
       // Force simulation
       const simulation = d3.forceSimulation(graph.nodes)
