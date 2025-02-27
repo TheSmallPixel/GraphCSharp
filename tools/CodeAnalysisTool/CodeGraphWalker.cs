@@ -14,7 +14,13 @@ namespace CodeAnalysisTool
     public class CodeGraphWalker : CSharpSyntaxWalker
     {
         // We'll set SemanticModel for each syntax tree we visit
-        public SemanticModel SemanticModel { get; set; }
+        private SemanticModel _semanticModel;
+
+        public SemanticModel SemanticModel
+        {
+            get => _semanticModel;
+            set => _semanticModel = value;
+        }
 
         // Collections to store discovered entities
         private HashSet<string> _namespaceNames = new HashSet<string>();
