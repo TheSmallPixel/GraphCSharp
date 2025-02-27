@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Code Graph
-        uses: TheSmallPixel/GraphCSharp
+        uses: TheSmallPixel/GraphCSharp@main
         with:
           source-path: "./MyProject"
           docs-dir: "docs"
