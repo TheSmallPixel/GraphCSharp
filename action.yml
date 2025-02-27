@@ -37,9 +37,11 @@ runs:
 
     - name: Build Roslyn tool
       run: dotnet build --configuration Release ./tools/CodeAnalysisTool/CodeAnalysisTool.csproj
+      shell: bash
 
     - name: Run Roslyn tool
       run: dotnet run --project ./tools/CodeAnalysisTool/CodeAnalysisTool.csproj -- ${{ inputs.source-path }} ${{ inputs.docs-dir }}
+      shell: bash
 
     - name: Ensure index.html from action repo
       id: ensure_index
