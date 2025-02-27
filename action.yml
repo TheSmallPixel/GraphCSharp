@@ -1,6 +1,10 @@
 name: "C# Code Graph Generator"
 description: "Generates a JSON code graph via Roslyn, ensures a D3 index page from the action repository, and can commit changes."
 
+branding:
+  icon: "share-2"
+  color: "black"
+
 inputs:
   source-path:
     description: "Directory with .cs files"
