@@ -212,6 +212,7 @@ namespace CodeAnalysisTool
                         {
                             Source = ns,
                             Target = cls
+                            Type = "containment"
                         });
                     }
                 }
@@ -230,6 +231,7 @@ namespace CodeAnalysisTool
                         {
                             Source = cls,
                             Target = method
+                            Type = "containment"
                         });
                     }
                 }
@@ -241,10 +243,25 @@ namespace CodeAnalysisTool
                 var caller = kvp.Key;
                 foreach (var callee in kvp.Value)
                 {
+                    // default to internal call
+                    var linkType = "call";
+
+                    // Maybe mark external if the callee belongs to a namespace outside your code.
+                    // For example, if your code's root is "MyApp", anything that starts with "System."
+                    // or doesn't match your known namespaces is external:
+                    var calleeNs = callee.Split('.')[0]; 
+                    // or do a more robust check
+
+                    if (callee.StartsWith("System.") || !_namespaceNames.Any(ns => callee.StartsWith(ns)))
+                    {
+                        linkType = "external";
+                    }
+
                     graph.Links.Add(new D3Link
                     {
                         Source = caller,
-                        Target = callee
+                        Target = callee,
+                        Type = linkType
                     });
                 }
             }
@@ -273,5 +290,6 @@ namespace CodeAnalysisTool
     {
         public string Source { get; set; }
         public string Target { get; set; }
+        public string Type { get; set; }
     }
 }

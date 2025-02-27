@@ -63,7 +63,15 @@
       const link = svg.selectAll(".link")
         .data(graph.links)
         .enter().append("line")
-        .attr("class", "link");
+        .attr("class", "link")
+        .style("stroke-dasharray", d => {
+          // If link.type === "external", use dashed lines
+          return d.type === "external" ? "3, 3" : null;
+        })
+        .style("stroke", d => {
+          // optional: color external calls differently
+          return d.type === "external" ? "red" : "#999";
+        });
 
       // Draw nodes as a <g> containing circle + text
       const node = svg.selectAll(".node")
@@ -89,11 +97,11 @@
 
       // Append the circle inside each node
       node.append("circle")
-        .attr("r", d => {
-          if (d.group === "namespace") return 10;
-          if (d.group === "class") return 8;
-          if (d.group === "method") return 5;
-          return 5;
+            .attr("r", d => {
+          if (d.group === "namespace") return 20;
+          if (d.group === "class")     return 16;
+          if (d.group === "method")    return 12;
+          return 12;
         })
         .attr("fill", d => colorMap[d.group] || "#ccc");
 
