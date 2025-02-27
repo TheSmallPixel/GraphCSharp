@@ -72,7 +72,7 @@ runs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add ${{ inputs.docs-dir }}
+        git add ${{ inputs.docs-dir }}/graph.json ${{ inputs.docs-dir }}/index.html
         if git diff --cached --quiet; then
           echo "No changes to commit."
         else

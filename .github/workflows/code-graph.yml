@@ -1,0 +1,17 @@
+name: "Generate Code Graph"
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  generate-graph:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Graph
+        uses: TheSmallPixel/GraphCSharp
+        with:
+          source-path: "./MyProject"
+          docs-dir: "docs"
+          index-file: "index.html"
+          commit-changes: "true"
