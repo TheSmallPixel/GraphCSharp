@@ -49,10 +49,8 @@ runs:
         DOCS_DIR="${{ inputs.docs-dir }}"
         INDEX_FILE="${{ inputs.index-file }}"
 
-        # "github.action_path" is the path to the action's code on the runner
         ACTION_REPO_DIR="${{ github.action_path }}"
         DEFAULT_INDEX="$ACTION_REPO_DIR/default_index.html"
-
         TARGET_FILE="${DOCS_DIR}/${INDEX_FILE}"
 
         echo "docs-dir: $DOCS_DIR"
@@ -68,6 +66,7 @@ runs:
         else
           echo "Index file already exists. Not overwriting."
         fi
+      shell: bash
 
     - name: Commit changes
       if: ${{ inputs.commit-changes == 'true' }}
@@ -81,3 +80,4 @@ runs:
           git commit -m "Update code graph JSON & index [skip ci]"
           git push
         fi
+      shell: bash
