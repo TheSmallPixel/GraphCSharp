@@ -37,20 +37,19 @@
         .append("svg")
         .attr("width", width)
         .attr("height", height);
-        const simulation = d3.forceSimulation(graph.Nodes)
-        .force("link", d3.forceLink(graph.Links)
-          .id(d => d.Id)            // <--- Use node.Id instead of node.id
-          .distance(100))
+      
+      const simulation = d3.forceSimulation(graph.nodes)
+        .force("link", d3.forceLink(graph.links).id(d => d.id).distance(100))
         .force("charge", d3.forceManyBody().strength(-300))
-        .force("center", d3.forceCenter(width/2, height/2));
+        .force("center", d3.forceCenter(width / 2, height / 2));
 
       const link = svg.selectAll(".link")
-        .data(graph.Links)
+        .data(graph.links)
         .enter().append("line")
         .attr("class", "link");
 
       const node = svg.selectAll(".node")
-        .data(graph.Nodes)
+        .data(graph.nodes)
         .enter().append("circle")
         .attr("class", "node")
         .attr("r", d => {
@@ -79,7 +78,7 @@
           }));
 
       const label = svg.selectAll("text")
-        .data(graph.Nodes)
+        .data(graph.nodes)
         .enter().append("text")
         .attr("dy", -3)
         .text(d => d.Label);
