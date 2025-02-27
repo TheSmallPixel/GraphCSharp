@@ -27,10 +27,14 @@ namespace CodeAnalysisTool
         private HashSet<string> _classNames = new HashSet<string>();
         private HashSet<string> _methodFullNames = new HashSet<string>();
         private HashSet<string> _propertyFullNames = new HashSet<string>();
-
+        private HashSet<string> _variableFullNames = new HashSet<string>();
+    
         // Maps a "caller" method to the list of "callee" methods it invokes
         private Dictionary<string, List<string>> _methodCallMap = new Dictionary<string, List<string>>();
         private Dictionary<string, List<string>> _methodPropertyMap = new Dictionary<string, List<string>>();
+        private Dictionary<string, string> _variableTypeMap = new Dictionary<string, string>();
+        private Dictionary<string, string> _propertyTypeMap = new Dictionary<string, string>();
+
 
         // Track "where we are" during traversal
         private string _currentNamespace;
@@ -113,6 +117,12 @@ namespace CodeAnalysisTool
         }
         public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
+            if (SemanticModel == null)
+            {
+                base.VisitPropertyDeclaration(node);
+                return;
+            }
+
             // e.g. public int MyProperty { get; set; }
             // Build a "fully qualified" property name: "Namespace.Class.Property"
             var propertyName = node.Identifier.Text;
@@ -123,17 +133,98 @@ namespace CodeAnalysisTool
             // Record property in our set
             _propertyFullNames.Add(fullPropertyName);
 
-            // No direct calls from a property (like with methods),
-            // but we do want to track usage from other code.
-            // We'll add a map for property usage from methods:
-            // We'll do: if we see references to this property, create edges method->property.
+            // Use semantic model to get the property type
+            var typeSymbol = SemanticModel.GetTypeInfo(node.Type).Type;
+            if (typeSymbol != null)
+            {
+                string typeFullName = BuildFullTypeName(typeSymbol);
 
-            // We also might want to record a dictionary for property->???
-            // For now, we only link class->property, so we can do that in GetGraph() similar to how we do class->method.
-
+                // Record property->type
+                if (!_propertyTypeMap.ContainsKey(fullPropertyName))
+                {
+                    _propertyTypeMap[fullPropertyName] = typeFullName;
+                }
+            }
             base.VisitPropertyDeclaration(node);
         }
+        // 1) Local variables
+        public override void VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
+        {
+            // e.g.  int x = 10, y = 20;
+            // node.Declaration.Type => int
+            // node.Declaration.Variables => x, y
+            if (_semanticModel == null) {
+                base.VisitLocalDeclarationStatement(node);
+                return;
+            }
 
+            // The type info from the semantic model
+            var typeSymbol = _semanticModel.GetTypeInfo(node.Declaration.Type).Type;
+            if (typeSymbol != null) {
+                string typeFullName = BuildFullTypeName(typeSymbol);
+                
+                foreach (var v in node.Declaration.Variables)
+                {
+                    // Build a unique name for the variable. For example:
+                    // "Namespace.Class.Method.variableName"
+                    // If we are inside a method, we can do something like:
+                    string varName = v.Identifier.Text;
+
+                    // If we have a current method:
+                    string fullVarName = string.IsNullOrEmpty(_currentMethod)
+                        ? varName  // no method context
+                        : $"{_currentMethod}.{varName}";
+
+                    _variableFullNames.Add(fullVarName);
+                    if (!_variableTypeMap.ContainsKey(fullVarName))
+                    {
+                        _variableTypeMap[fullVarName] = typeFullName;
+                    }
+                }
+            }
+
+            base.VisitLocalDeclarationStatement(node);
+        }
+        // 2) Fields
+        public override void VisitFieldDeclaration(FieldDeclarationSyntax node)
+        {
+            // e.g. public int age, count;
+            if (_semanticModel == null) {
+                base.VisitFieldDeclaration(node);
+                return;
+            }
+
+            var typeSymbol = _semanticModel.GetTypeInfo(node.Declaration.Type).Type;
+            if (typeSymbol != null)
+            {
+                string typeFullName = BuildFullTypeName(typeSymbol);
+
+                // Fields can declare multiple variables in one statement
+                foreach (var v in node.Declaration.Variables)
+                {
+                    // If we are inside a class "MyApp.Core.Foo", the field is "MyApp.Core.Foo.fieldName"
+                    string varName = v.Identifier.Text;
+                    string fullVarName = string.IsNullOrEmpty(_currentClass)
+                        ? varName 
+                        : $"{_currentClass}.{varName}";
+
+                    _variableFullNames.Add(fullVarName);
+                    if (!_variableTypeMap.ContainsKey(fullVarName))
+                    {
+                        _variableTypeMap[fullVarName] = typeFullName;
+                    }
+                }
+            }
+
+            base.VisitFieldDeclaration(node);
+        }
+        // Helper to build a full name like "System.Int32" or "MyApp.Core.Bar"
+        private string BuildFullTypeName(ITypeSymbol typeSymbol)
+        {
+            // For a simple approach, 
+            // e.g. "System.Int32", or "MyApp.Core.Foo" for classes in your code
+            return $"{typeSymbol.ContainingNamespace}.{typeSymbol.Name}";
+        }
         public override void VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
         {
             // This catches expressions like "foo.MyProperty", "this.MyProperty", "SomeStaticClass.Property"
@@ -258,6 +349,43 @@ namespace CodeAnalysisTool
                     Id = cls,
                     Group = "class",
                     Label = classLabel
+                });
+            }
+            // 3) Add variable nodes
+            foreach (var varName in _variableFullNames)
+            {
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = varName,
+                    Group = "variable",
+                    Label = varName.Split('.').Last() // e.g. "x" or "age"
+                });
+            }
+            // 4) Link variable -> type
+            // We'll also create nodes for the type if we want them in the graph.
+            // Or if "typeSymbol" references a class we already have, we can link to that class node.
+            // If it's external (e.g. System.Int32), we might choose to create an "external type" node or skip.
+            foreach (var kvp in _variableTypeMap)
+            {
+                var variableName = kvp.Key;     // e.g. "MyApp.Core.Foo.Bar.x"
+                var typeFullName = kvp.Value;   // e.g. "System.Int32" or "MyApp.Core.Foo"
+
+                // Add a node for the type if we want to show it
+                // or if we already do class-based nodes, see if typeFullName is in _classNames or something
+                // For demonstration, let's create a node for ANY type
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = typeFullName,
+                    Group = "type",
+                    Label = typeFullName.Split('.').Last()
+                });
+
+                // Create the link (variable -> type) with a special property "reference type"
+                graph.Links.Add(new D3Link
+                {
+                    Source = variableName,
+                    Target = typeFullName,
+                    Type = "reference"  // or some property name indicating it's a variable->type link
                 });
             }
 

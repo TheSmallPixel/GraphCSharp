@@ -65,10 +65,12 @@
         .enter().append("line")
         .attr("class", "link")
         .style("stroke-dasharray", d => {
+          if (d.type === "reference") return "3,3"; // dashed
           // If link.type === "external", use dashed lines
           return d.type === "external" ? "3, 3" : null;
         })
         .style("stroke", d => {
+          if (d.type === "reference") return "blue"; // variable->type link
           // optional: color external calls differently
           return d.type === "external" ? "red" : "#999";
         });
@@ -97,14 +99,25 @@
 
       // Append the circle inside each node
       node.append("circle")
-            .attr("r", d => {
-          if (d.group === "namespace") return 20;
-          if (d.group === "class")     return 16;
-          if (d.group === "method")    return 12;
-          return 12;
+        .attr("r", d => {
+          if (d.group === "namespace") return 10;
+          if (d.group === "class")     return 8;
+          if (d.group === "method")    return 5;
+          if (d.group === "property")  return 5;
+          if (d.group === "variable")  return 4; // or bigger
+          if (d.group === "type")      return 7; // for type nodes
+          return 5;
         })
-        .attr("fill", d => colorMap[d.group] || "#ccc");
-
+        .attr("fill", d => {
+          // color each group
+          if (d.group === "namespace") return "#1f77b4";
+          if (d.group === "class")     return "#ff7f0e";
+          if (d.group === "method")    return "#2ca02c";
+          if (d.group === "property")  return "#d62728";
+          if (d.group === "variable")  return "#9467bd";
+          if (d.group === "type")      return "#8c564b";
+          return "#ccc";
+        });
       // Append text (the label) centered in the node
       node.append("text")
         .attr("text-anchor", "middle")
@@ -126,9 +139,10 @@
 
       // Add a legend in the top-left corner
       const legendData = [
-        { group: "namespace", color: colorMap["namespace"] },
-        { group: "class",     color: colorMap["class"] },
-        { group: "method",    color: colorMap["method"] }
+        { group: "namespace", color: "#1f77b4" },
+        { group: "class", color: "#ff7f0e" },
+        { group: "method", color: "#2ca02c" },
+        { group: "property", color: "#d62728" } // new
       ];
 
       const legend = svg.append("g")
