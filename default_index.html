@@ -168,11 +168,62 @@
         { group: "method", color: "#2ca02c" },
         { group: "property", color: "#d62728" } // new
       ];
+      // Example link types
+      const linkLegendData = [
+        {
+          type: "containment",   // or whatever you store in d.type
+          color: "#999",         // same color as your code
+          dash: null,            // solid line (no dash)
+          label: "Containment"
+        },
+        {
+          type: "call",
+          color: "#555",
+          dash: null,
+          label: "Method Call"
+        },
+        {
+          type: "reference",
+          color: "blue",
+          dash: "3,3", // dashed line
+          label: "Reference"
+        },
+        // Add more types if needed
+      ];
 
+   
+
+      const linkLegend = svg.append("g")
+        .attr("class", "link-legend")
+        .attr("transform", "translate(20, 100)"); 
+
+      const linkLegendItem = linkLegend.selectAll(".linkLegendItem")
+        .data(linkLegendData)
+        .enter()
+        .append("g")
+        .attr("class", "linkLegendItem")
+        .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+
+      // The line: from x1=0,y1=6 to x2=25,y2=6 
+      // so it's a short horizontal segment
+      linkLegendItem.append("line")
+        .attr("x1", 0)
+        .attr("y1", 6)
+        .attr("x2", 25)
+        .attr("y2", 6)
+        .attr("stroke-width", 2)
+        .attr("stroke", d => d.color)
+        .style("stroke-dasharray", d => d.dash);
+
+      // The label text
+      linkLegendItem.append("text")
+        .attr("x", 30)     // place the text a bit to the right of the line
+        .attr("y", 6)
+        .attr("dy", "0.35em")
+        .text(d => d.label);
       const legend = svg.append("g")
         .attr("class", "legend")
         .attr("transform", "translate(20,20)");
-
       const legendItem = legend.selectAll(".legendItem")
         .data(legendData)
         .enter().append("g")
