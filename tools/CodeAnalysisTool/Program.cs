@@ -51,7 +51,17 @@ namespace CodeAnalysisTool
             // 6) Output to docs/graph.json
             Directory.CreateDirectory(docsPath);
             var outputFile = Path.Combine(docsPath, "graph.json");
-            File.WriteAllText(outputFile, JsonConvert.SerializeObject(graph, Formatting.Indented));
+            // Create settings specifying our custom naming strategy
+            var settings = new JsonSerializerSettings
+            {
+                // Use a DefaultContractResolver with our LowercaseNamingStrategy
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new LowercaseNamingStrategy()
+                },
+                Formatting = Formatting.Indented // for pretty printing
+            };
+            File.WriteAllText(outputFile, JsonConvert.SerializeObject(graph, settings));
 
             Console.WriteLine($"Generated: {outputFile}");
         }
