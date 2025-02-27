@@ -1,0 +1,81 @@
+name: "C# Code Graph Generator"
+description: "Generates a JSON code graph via Roslyn, ensures a D3 index page from the action repository, and can commit changes."
+
+inputs:
+  source-path:
+    description: "Directory with .cs files"
+    required: false
+    default: "./src"
+
+  docs-dir:
+    description: "Directory for docs (graph.json + index.html)"
+    required: false
+    default: "docs"
+
+  index-file:
+    description: "HTML file name. If missing, we'll copy default_index.html from the action."
+    required: false
+    default: "index.html"
+
+  commit-changes:
+    description: "Set to 'true' to commit changes back"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: true
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: "7.0.x"
+
+    - name: Build Roslyn tool
+      run: dotnet build --configuration Release ./tools/CodeAnalysisTool/CodeAnalysisTool.csproj
+
+    - name: Run Roslyn tool
+      run: dotnet run --project ./tools/CodeAnalysisTool/CodeAnalysisTool.csproj -- ${{ inputs.source-path }} ${{ inputs.docs-dir }}
+
+    - name: Ensure index.html from action repo
+      id: ensure_index
+      run: |
+        DOCS_DIR="${{ inputs.docs-dir }}"
+        INDEX_FILE="${{ inputs.index-file }}"
+
+        # "github.action_path" is the path to the action's code on the runner
+        ACTION_REPO_DIR="${{ github.action_path }}"
+        DEFAULT_INDEX="$ACTION_REPO_DIR/default_index.html"
+
+        TARGET_FILE="${DOCS_DIR}/${INDEX_FILE}"
+
+        echo "docs-dir: $DOCS_DIR"
+        echo "index-file: $INDEX_FILE"
+        echo "Action path: $ACTION_REPO_DIR"
+        echo "Copying from: $DEFAULT_INDEX"
+        echo "Target file: $TARGET_FILE"
+
+        if [ ! -f "$TARGET_FILE" ]; then
+          echo "No index file found in user repo. Copying default_index.html..."
+          mkdir -p "$(dirname "$TARGET_FILE")"
+          cp "$DEFAULT_INDEX" "$TARGET_FILE"
+        else
+          echo "Index file already exists. Not overwriting."
+        fi
+
+    - name: Commit changes
+      if: ${{ inputs.commit-changes == 'true' }}
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add ${{ inputs.docs-dir }}
+        if git diff --cached --quiet; then
+          echo "No changes to commit."
+        else
+          git commit -m "Update code graph JSON & index [skip ci]"
+          git push
+        fi
