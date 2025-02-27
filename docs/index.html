@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Code Graph Visualization</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+    html, body {
+      margin: 0; 
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden; /* no scrollbars */
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block; /* remove default spacing */
+    }
+    .link {
+      stroke: #999;
+      stroke-opacity: 0.6;
+    }
+    .node circle {
+      stroke: #fff;
+      stroke-width: 1.5px;
+    }
+    .node text {
+      font-size: 12px;
+      pointer-events: none; /* so you can drag the circle without grabbing text */
+    }
+  </style>
+</head>
+<body>
+  <h1>Code Graph Visualization</h1>
+  <div id="chart"></div>
+
+  <script>
+    // Fetch the JSON data (graph.json)
+    fetch('graph.json')
+      .then(response => response.json())
+      .then(data => drawGraph(data))
+      .catch(err => console.error("Fetch error:", err));
+
+    function drawGraph(graph) {
+      const width = window.innerWidth, height = window.innerHeight;
+      // Create an SVG
+      const svg = d3.select("#chart")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      // A color mapping for groups
+      const colorMap = {
+        namespace: "#1f77b4",
+        class:     "#ff7f0e",
+        method:    "#2ca02c"
+      };
+
+      const gContainer = svg.append("g")
+      .attr("class", "everything");
+
+      const zoomBehavior = d3.zoom()
+        .scaleExtent([0.1, 10])  // optional limit: from 10% to 1000% zoom
+        .on("zoom", (event) => {
+          // 2) The "zoom" handler updates the transform
+          gContainer.attr("transform", event.transform);
+        });
+
+      // 3) Attach the zoom to the SVG
+      svg.call(zoomBehavior);
+
+      // Force simulation
+      const simulation = d3.forceSimulation(graph.nodes)
+        .force("link", d3.forceLink(graph.links)
+          .id(d => d.id)
+          .distance(100)
+        )
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+      // Draw links
+      const link = gContainer.selectAll(".link")
+        .data(graph.links)
+        .enter().append("line")
+        .attr("class", "link")
+        .style("stroke-dasharray", d => {
+          if (d.type === "reference") return "3,3"; // dashed
+          // If link.type === "external", use dashed lines
+          return d.type === "external" ? "3, 3" : null;
+        })
+        .style("stroke", d => {
+          if (d.type === "reference") return "blue"; // variable->type link
+          // optional: color external calls differently
+          return d.type === "external" ? "red" : "#999";
+        });
+
+      // Draw nodes as a <g> containing circle + text
+      const node = gContainer.selectAll(".node")
+        .data(graph.nodes)
+        .enter().append("g")
+        .attr("class", "node")
+        .call(d3.drag()
+          .on("start", (event, d) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on("drag", (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on("end", (event, d) => {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+          })
+        );
+
+      // Append the circle inside each node
+      node.append("circle")
+        .attr("r", d => {
+          if (d.group === "namespace") return 10;
+          if (d.group === "class")     return 8;
+          if (d.group === "method")    return 5;
+          if (d.group === "property")  return 5;
+          if (d.group === "variable")  return 4; // or bigger
+          if (d.group === "type")      return 7; // for type nodes
+          return 5;
+        })
+        .attr("fill", d => {
+          // color each group
+          if (d.group === "namespace") return "#1f77b4";
+          if (d.group === "class")     return "#ff7f0e";
+          if (d.group === "method")    return "#2ca02c";
+          if (d.group === "property")  return "#d62728";
+          if (d.group === "variable")  return "#9467bd";
+          if (d.group === "type")      return "#8c564b";
+          return "#ccc";
+        });
+      // Append text (the label) centered in the node
+      node.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", ".35em")
+        .text(d => d.label);
+
+      // On each tick, update positions
+      simulation.on("tick", () => {
+        link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+
+        // Move the entire <g> (circle + text) to (x, y)
+        node
+          .attr("transform", d => `translate(${d.x}, ${d.y})`);
+      });
+
+      // Add a legend in the top-left corner
+      const legendData = [
+        { group: "namespace", color: "#1f77b4" },
+        { group: "class", color: "#ff7f0e" },
+        { group: "method", color: "#2ca02c" },
+        { group: "property", color: "#d62728" } // new
+      ];
+
+      const legend = svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", "translate(20,20)");
+
+      const legendItem = legend.selectAll(".legendItem")
+        .data(legendData)
+        .enter().append("g")
+        .attr("class", "legendItem")
+        .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+
+      legendItem.append("rect")
+        .attr("width", 12)
+        .attr("height", 12)
+        .attr("fill", d => d.color);
+
+      legendItem.append("text")
+        .attr("x", 18)
+        .attr("y", 6)
+        .attr("dy", "0.35em")
+        .text(d => d.group);
+    }
+  </script>
+</body>
+</html>
