@@ -60,6 +60,9 @@
         method:    "#2ca02c"
       };
 
+      const gContainer = svg.append("g")
+      .attr("class", "everything");
+
       const zoomBehavior = d3.zoom()
         .scaleExtent([0.1, 10])  // optional limit: from 10% to 1000% zoom
         .on("zoom", (event) => {
@@ -80,7 +83,7 @@
         .force("center", d3.forceCenter(width / 2, height / 2));
 
       // Draw links
-      const link = svg.selectAll(".link")
+      const link = gContainer.selectAll(".link")
         .data(graph.links)
         .enter().append("line")
         .attr("class", "link")
@@ -96,7 +99,7 @@
         });
 
       // Draw nodes as a <g> containing circle + text
-      const node = svg.selectAll(".node")
+      const node = gContainer.selectAll(".node")
         .data(graph.nodes)
         .enter().append("g")
         .attr("class", "node")
