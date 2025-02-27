@@ -67,4 +67,11 @@ namespace CodeAnalysisTool
             Console.WriteLine($"Generated: {outputFile}");
         }
     }
+    public class LowercaseNamingStrategy : NamingStrategy
+    {
+        protected override string ResolvePropertyName(string name)
+        {
+            return name.ToLowerInvariant();
+        }
+    }
 }
