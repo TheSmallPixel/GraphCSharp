@@ -20,9 +20,11 @@ namespace CodeAnalysisTool
         private HashSet<string> _namespaceNames = new HashSet<string>();
         private HashSet<string> _classNames = new HashSet<string>();
         private HashSet<string> _methodFullNames = new HashSet<string>();
+        private HashSet<string> _propertyFullNames = new HashSet<string>();
 
         // Maps a "caller" method to the list of "callee" methods it invokes
         private Dictionary<string, List<string>> _methodCallMap = new Dictionary<string, List<string>>();
+        private Dictionary<string, List<string>> _methodPropertyMap = new Dictionary<string, List<string>>();
 
         // Track "where we are" during traversal
         private string _currentNamespace;
@@ -103,7 +105,74 @@ namespace CodeAnalysisTool
             // Restore
             _currentMethod = prevMethod;
         }
+        public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
+        {
+            // e.g. public int MyProperty { get; set; }
+            // Build a "fully qualified" property name: "Namespace.Class.Property"
+            var propertyName = node.Identifier.Text;
+            var fullPropertyName = string.IsNullOrEmpty(_currentClass)
+                ? propertyName
+                : $"{_currentClass}.{propertyName}";
 
+            // Record property in our set
+            _propertyFullNames.Add(fullPropertyName);
+
+            // No direct calls from a property (like with methods),
+            // but we do want to track usage from other code.
+            // We'll add a map for property usage from methods:
+            // We'll do: if we see references to this property, create edges method->property.
+
+            // We also might want to record a dictionary for property->???
+            // For now, we only link class->property, so we can do that in GetGraph() similar to how we do class->method.
+
+            base.VisitPropertyDeclaration(node);
+        }
+
+        public override void VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
+        {
+            // This catches expressions like "foo.MyProperty", "this.MyProperty", "SomeStaticClass.Property"
+            // We'll see if the symbol is a property:
+            if (_semanticModel == null || _currentMethod == null)
+            {
+                base.VisitMemberAccessExpression(node);
+                return;
+            }
+
+            var symbolInfo = _semanticModel.GetSymbolInfo(node);
+            var propertySymbol = symbolInfo.Symbol as IPropertySymbol;
+            if (propertySymbol != null)
+            {
+                // Build a fully qualified property name
+                var propNamespace = propertySymbol.ContainingNamespace?.ToString();
+                var propClass = propertySymbol.ContainingType?.Name;
+                var propName = propertySymbol.Name;
+
+                if (!string.IsNullOrEmpty(propNamespace)
+                    && !string.IsNullOrEmpty(propClass)
+                    && !string.IsNullOrEmpty(propName))
+                {
+                    var fullPropertyName = $"{propNamespace}.{propClass}.{propName}";
+                    
+                    // Make sure we track that property in _propertyFullNames
+                    if (!_propertyFullNames.Contains(fullPropertyName))
+                    {
+                        _propertyFullNames.Add(fullPropertyName);
+                    }
+
+                    // Now record an edge from the "current method" to that property
+                    if (!_methodPropertyMap.ContainsKey(_currentMethod))
+                    {
+                        _methodPropertyMap[_currentMethod] = new List<string>();
+                    }
+                    if (!_methodPropertyMap[_currentMethod].Contains(fullPropertyName))
+                    {
+                        _methodPropertyMap[_currentMethod].Add(fullPropertyName);
+                    }
+                }
+            }
+
+            base.VisitMemberAccessExpression(node);
+        }
         /// <summary>
         /// Visit method invocations (e.g. foo.Bar() calls).
         /// We use the SemanticModel to find the invoked symbol,
@@ -197,6 +266,16 @@ namespace CodeAnalysisTool
                     Label = methodLabel
                 });
             }
+            foreach (var prop in _propertyFullNames)
+            {
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = prop,
+                    Group = "property",
+                    Label = prop.Split('.').Last()
+                });
+            }
+
 
             // 4) Links:
             // (a) namespace -> class
@@ -236,6 +315,41 @@ namespace CodeAnalysisTool
                     }
                 }
             }
+            // 4) class->property
+            // we can do the same substring logic as method->class:
+            foreach (var prop in _propertyFullNames)
+            {
+                int idx = prop.LastIndexOf('.');
+                if (idx > 0)
+                {
+                    var cls = prop.Substring(0, idx);
+                    // If that class is in _classNames, link them
+                    if (_classNames.Contains(cls))
+                    {
+                        graph.Links.Add(new D3Link
+                        {
+                            Source = cls,
+                            Target = prop,
+                            Type = "containment"
+                        });
+                    }
+                }
+            }
+            // 5) method->property usage
+            foreach (var kvp in _methodPropertyMap)
+            {
+                var callerMethod = kvp.Key; // e.g. "MyApp.Core.Foo.Bar"
+                foreach (var property in kvp.Value)
+                {
+                    graph.Links.Add(new D3Link
+                    {
+                        Source = callerMethod,
+                        Target = property,
+                        Type = "external"
+                    });
+                }
+            }
+
 
             // (c) method -> method (method calls)
             foreach (var kvp in _methodCallMap)
