@@ -2,6 +2,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Newtonsoft.Json; // if you want to serialize the final graph
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -34,7 +35,11 @@ namespace CodeAnalysisTool
         private Dictionary<string, List<string>> _methodPropertyMap = new Dictionary<string, List<string>>();
         private Dictionary<string, string> _variableTypeMap = new Dictionary<string, string>();
         private Dictionary<string, string> _propertyTypeMap = new Dictionary<string, string>();
-
+        
+        // Track used methods and properties for unused code detection
+        private HashSet<string> _usedMethods = new HashSet<string>();
+        private HashSet<string> _usedProperties = new HashSet<string>();
+        private HashSet<string> _usedClasses = new HashSet<string>();
 
         // Track "where we are" during traversal
         private string _currentNamespace;
@@ -46,8 +51,15 @@ namespace CodeAnalysisTool
         /// </summary>
         public override void Visit(SyntaxNode node)
         {
-            // You could add custom logic here if needed
-            base.Visit(node);
+            try
+            {
+                base.Visit(node);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during code traversal: {ex.Message}");
+                // Continue despite errors
+            }
         }
 
         /// <summary>
@@ -56,8 +68,9 @@ namespace CodeAnalysisTool
         /// </summary>
         public override void VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
         {
-            _currentNamespace = node.Name.ToString();
-            _namespaceNames.Add(_currentNamespace);
+            string namespaceName = node.Name.ToString();
+            _currentNamespace = namespaceName;
+            _namespaceNames.Add(namespaceName);
 
             base.VisitNamespaceDeclaration(node);
 
@@ -77,6 +90,23 @@ namespace CodeAnalysisTool
                 : $"{_currentNamespace}.{className}";
 
             _classNames.Add(fullClassName);
+
+            // If this class has a base class, record that relationship
+            if (node.BaseList != null)
+            {
+                foreach (var baseType in node.BaseList.Types)
+                {
+                    if (SemanticModel != null)
+                    {
+                        var typeInfo = SemanticModel.GetTypeInfo(baseType.Type);
+                        if (typeInfo.Type != null)
+                        {
+                            var baseClassName = BuildFullTypeName(typeInfo.Type);
+                            _usedClasses.Add(baseClassName);
+                        }
+                    }
+                }
+            }
 
             var prevClass = _currentClass;
             _currentClass = fullClassName;
@@ -100,10 +130,30 @@ namespace CodeAnalysisTool
             // Keep track of it
             _methodFullNames.Add(fullMethodName);
 
+            // Check if this method overrides another method
+            bool isOverride = node.Modifiers.Any(m => m.ValueText == "override");
+            if (isOverride)
+            {
+                // An override method is implicitly used
+                _usedMethods.Add(fullMethodName);
+            }
+
+            // Special case for Main method - it's the entry point, so it's used
+            if (methodName == "Main")
+            {
+                _usedMethods.Add(fullMethodName);
+            }
+
             // Ensure there's an entry for calls from this method
             if (!_methodCallMap.ContainsKey(fullMethodName))
             {
                 _methodCallMap[fullMethodName] = new List<string>();
+            }
+
+            // Ensure there's an entry for property usage from this method
+            if (!_methodPropertyMap.ContainsKey(fullMethodName))
+            {
+                _methodPropertyMap[fullMethodName] = new List<string>();
             }
 
             // Update the "current method" context
@@ -115,6 +165,7 @@ namespace CodeAnalysisTool
             // Restore
             _currentMethod = prevMethod;
         }
+
         public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
             if (SemanticModel == null)
@@ -133,11 +184,25 @@ namespace CodeAnalysisTool
             // Record property in our set
             _propertyFullNames.Add(fullPropertyName);
 
+            // Check if this property overrides another property
+            bool isOverride = node.Modifiers.Any(m => m.ValueText == "override");
+            if (isOverride)
+            {
+                // An override property is implicitly used
+                _usedProperties.Add(fullPropertyName);
+            }
+
             // Use semantic model to get the property type
             var typeSymbol = SemanticModel.GetTypeInfo(node.Type).Type;
             if (typeSymbol != null)
             {
                 string typeFullName = BuildFullTypeName(typeSymbol);
+                
+                // Mark this type as used
+                if (_classNames.Contains(typeFullName))
+                {
+                    _usedClasses.Add(typeFullName);
+                }
 
                 // Record property->type
                 if (!_propertyTypeMap.ContainsKey(fullPropertyName))
@@ -145,268 +210,237 @@ namespace CodeAnalysisTool
                     _propertyTypeMap[fullPropertyName] = typeFullName;
                 }
             }
+            
             base.VisitPropertyDeclaration(node);
         }
+
         // 1) Local variables
         public override void VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
-            // e.g.  int x = 10, y = 20;
-            // node.Declaration.Type => int
-            // node.Declaration.Variables => x, y
-            if (_semanticModel == null) {
+            if (SemanticModel == null || string.IsNullOrEmpty(_currentMethod))
+            {
                 base.VisitLocalDeclarationStatement(node);
                 return;
             }
 
-            // The type info from the semantic model
-            var typeSymbol = _semanticModel.GetTypeInfo(node.Declaration.Type).Type;
-            if (typeSymbol != null) {
-                string typeFullName = BuildFullTypeName(typeSymbol);
-                
-                foreach (var v in node.Declaration.Variables)
+            foreach (var variable in node.Declaration.Variables)
+            {
+                string variableName = variable.Identifier.Text;
+                string fullVariableName = $"{_currentMethod}.{variableName}";
+                _variableFullNames.Add(fullVariableName);
+
+                // Get type information
+                var typeSymbol = SemanticModel.GetTypeInfo(node.Declaration.Type).Type;
+                if (typeSymbol != null)
                 {
-                    // Build a unique name for the variable. For example:
-                    // "Namespace.Class.Method.variableName"
-                    // If we are inside a method, we can do something like:
-                    string varName = v.Identifier.Text;
-
-                    // If we have a current method:
-                    string fullVarName = string.IsNullOrEmpty(_currentMethod)
-                        ? varName  // no method context
-                        : $"{_currentMethod}.{varName}";
-
-                    _variableFullNames.Add(fullVarName);
-                    if (!_variableTypeMap.ContainsKey(fullVarName))
+                    string typeFullName = BuildFullTypeName(typeSymbol);
+                    
+                    // Mark this type as used if it's one of our classes
+                    if (_classNames.Contains(typeFullName))
                     {
-                        _variableTypeMap[fullVarName] = typeFullName;
+                        _usedClasses.Add(typeFullName);
                     }
+                    
+                    _variableTypeMap[fullVariableName] = typeFullName;
                 }
             }
 
             base.VisitLocalDeclarationStatement(node);
         }
-        // 2) Fields
+
+        // 2) Field variables
         public override void VisitFieldDeclaration(FieldDeclarationSyntax node)
         {
-            // e.g. public int age, count;
-            if (_semanticModel == null) {
+            if (SemanticModel == null || string.IsNullOrEmpty(_currentClass))
+            {
                 base.VisitFieldDeclaration(node);
                 return;
             }
 
-            var typeSymbol = _semanticModel.GetTypeInfo(node.Declaration.Type).Type;
+            // Get the type of field
+            var typeSymbol = SemanticModel.GetTypeInfo(node.Declaration.Type).Type;
             if (typeSymbol != null)
             {
                 string typeFullName = BuildFullTypeName(typeSymbol);
-
-                // Fields can declare multiple variables in one statement
-                foreach (var v in node.Declaration.Variables)
+                
+                // Mark this type as used if it's one of our classes
+                if (_classNames.Contains(typeFullName))
                 {
-                    // If we are inside a class "MyApp.Core.Foo", the field is "MyApp.Core.Foo.fieldName"
-                    string varName = v.Identifier.Text;
-                    string fullVarName = string.IsNullOrEmpty(_currentClass)
-                        ? varName 
-                        : $"{_currentClass}.{varName}";
-
-                    _variableFullNames.Add(fullVarName);
-                    if (!_variableTypeMap.ContainsKey(fullVarName))
-                    {
-                        _variableTypeMap[fullVarName] = typeFullName;
-                    }
+                    _usedClasses.Add(typeFullName);
+                }
+                
+                foreach (var variable in node.Declaration.Variables)
+                {
+                    string variableName = variable.Identifier.Text;
+                    string fullVariableName = $"{_currentClass}.{variableName}";
+                    _variableFullNames.Add(fullVariableName);
+                    _variableTypeMap[fullVariableName] = typeFullName;
                 }
             }
 
             base.VisitFieldDeclaration(node);
         }
-        // Helper to build a full name like "System.Int32" or "MyApp.Core.Bar"
-        private string BuildFullTypeName(ITypeSymbol typeSymbol)
-        {
-            // For a simple approach, 
-            // e.g. "System.Int32", or "MyApp.Core.Foo" for classes in your code
-            return $"{typeSymbol.ContainingNamespace}.{typeSymbol.Name}";
-        }
-        public override void VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
-        {
-            // This catches expressions like "foo.MyProperty", "this.MyProperty", "SomeStaticClass.Property"
-            // We'll see if the symbol is a property:
-            if (_semanticModel == null || _currentMethod == null)
-            {
-                base.VisitMemberAccessExpression(node);
-                return;
-            }
 
-            var symbolInfo = _semanticModel.GetSymbolInfo(node);
-            var propertySymbol = symbolInfo.Symbol as IPropertySymbol;
-            if (propertySymbol != null)
-            {
-                // Build a fully qualified property name
-                var propNamespace = propertySymbol.ContainingNamespace?.ToString();
-                var propClass = propertySymbol.ContainingType?.Name;
-                var propName = propertySymbol.Name;
-
-                if (!string.IsNullOrEmpty(propNamespace)
-                    && !string.IsNullOrEmpty(propClass)
-                    && !string.IsNullOrEmpty(propName))
-                {
-                    var fullPropertyName = $"{propNamespace}.{propClass}.{propName}";
-                    
-                    // Make sure we track that property in _propertyFullNames
-                    if (!_propertyFullNames.Contains(fullPropertyName))
-                    {
-                        _propertyFullNames.Add(fullPropertyName);
-                    }
-
-                    // Now record an edge from the "current method" to that property
-                    if (!_methodPropertyMap.ContainsKey(_currentMethod))
-                    {
-                        _methodPropertyMap[_currentMethod] = new List<string>();
-                    }
-                    if (!_methodPropertyMap[_currentMethod].Contains(fullPropertyName))
-                    {
-                        _methodPropertyMap[_currentMethod].Add(fullPropertyName);
-                    }
-                }
-            }
-
-            base.VisitMemberAccessExpression(node);
-        }
-        /// <summary>
-        /// Visit method invocations (e.g. foo.Bar() calls).
-        /// We use the SemanticModel to find the invoked symbol,
-        /// building a fully qualified name for the callee if possible.
-        /// </summary>
+        // 3) Method calls (e.g. foo.Bar())
         public override void VisitInvocationExpression(InvocationExpressionSyntax node)
         {
-            if (SemanticModel == null || _currentMethod == null)
+            // We can only analyze properly with semantic model
+            if (SemanticModel == null || string.IsNullOrEmpty(_currentMethod))
             {
-                // If we don't have a semantic model or no current method context, skip
                 base.VisitInvocationExpression(node);
                 return;
             }
 
-            // Get symbol info for the invocation
-            var symbolInfo = SemanticModel.GetSymbolInfo(node);
-            var methodSymbol = symbolInfo.Symbol as IMethodSymbol;
-
+            // Get the referenced method
+            var methodSymbol = SemanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
             if (methodSymbol != null)
             {
-                var calleeNamespace = methodSymbol.ContainingNamespace?.ToString();
-                var calleeClass = methodSymbol.ContainingType?.Name;
-                var calleeMethod = methodSymbol.Name;
-
-                if (!string.IsNullOrEmpty(calleeNamespace)
-                    && !string.IsNullOrEmpty(calleeClass)
-                    && !string.IsNullOrEmpty(calleeMethod))
+                string calledMethod = BuildFullMethodName(methodSymbol);
+                
+                // Record this call
+                _methodCallMap[_currentMethod].Add(calledMethod);
+                
+                // Mark the called method as used
+                if (_methodFullNames.Contains(calledMethod))
                 {
-                    // Full name: "Namespace.Class.Method"
-                    var calleeFullName = $"{calleeNamespace}.{calleeClass}.{calleeMethod}";
-
-                    // Make sure we record the callee method as well
-                    if (!_methodFullNames.Contains(calleeFullName))
-                    {
-                        _methodFullNames.Add(calleeFullName);
-                        if (!_methodCallMap.ContainsKey(calleeFullName))
-                            _methodCallMap[calleeFullName] = new List<string>();
-                    }
-
-                    // Add an edge from the current method to the callee
-                    if (!_methodCallMap[_currentMethod].Contains(calleeFullName))
-                    {
-                        _methodCallMap[_currentMethod].Add(calleeFullName);
-                    }
+                    _usedMethods.Add(calledMethod);
                 }
             }
 
             base.VisitInvocationExpression(node);
         }
 
+        // 4) Property access (e.g. foo.Bar)
+        public override void VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
+        {
+            if (SemanticModel == null || string.IsNullOrEmpty(_currentMethod))
+            {
+                base.VisitMemberAccessExpression(node);
+                return;
+            }
+
+            // Get the referenced property
+            var symbol = SemanticModel.GetSymbolInfo(node).Symbol;
+            if (symbol is IPropertySymbol propertySymbol)
+            {
+                string propertyName = BuildFullPropertyName(propertySymbol);
+                
+                // Record that this method accesses the property
+                if (!_methodPropertyMap.ContainsKey(_currentMethod))
+                {
+                    _methodPropertyMap[_currentMethod] = new List<string>();
+                }
+                
+                if (!_methodPropertyMap[_currentMethod].Contains(propertyName))
+                {
+                    _methodPropertyMap[_currentMethod].Add(propertyName);
+                }
+                
+                // Mark the property as used
+                if (_propertyFullNames.Contains(propertyName))
+                {
+                    _usedProperties.Add(propertyName);
+                }
+            }
+
+            base.VisitMemberAccessExpression(node);
+        }
+
+        // Helpers for building full names from symbols
+        private string BuildFullTypeName(ITypeSymbol typeSymbol)
+        {
+            if (typeSymbol == null)
+                return "Unknown";
+
+            if (typeSymbol.ContainingNamespace != null && !string.IsNullOrEmpty(typeSymbol.ContainingNamespace.Name))
+            {
+                return $"{typeSymbol.ContainingNamespace}.{typeSymbol.Name}";
+            }
+
+            return typeSymbol.Name;
+        }
+
+        private string BuildFullMethodName(IMethodSymbol methodSymbol)
+        {
+            if (methodSymbol == null)
+                return "Unknown";
+
+            if (methodSymbol.ContainingType != null)
+            {
+                string typeName = BuildFullTypeName(methodSymbol.ContainingType);
+                return $"{typeName}.{methodSymbol.Name}";
+            }
+
+            return methodSymbol.Name;
+        }
+
+        private string BuildFullPropertyName(IPropertySymbol propertySymbol)
+        {
+            if (propertySymbol == null)
+                return "Unknown";
+
+            if (propertySymbol.ContainingType != null)
+            {
+                string typeName = BuildFullTypeName(propertySymbol.ContainingType);
+                return $"{typeName}.{propertySymbol.Name}";
+            }
+
+            return propertySymbol.Name;
+        }
+
         /// <summary>
-        /// Builds a D3Graph (Nodes + Links) that references 
-        /// discovered namespaces, classes, methods, and method-call edges.
+        /// Generates the final D3 graph with all nodes and links
         /// </summary>
         public D3Graph GetGraph()
         {
-            // Create the graph model
+            // Create a D3 force graph
             var graph = new D3Graph();
 
-            // 1) Namespace nodes
+            // 1) Add namespace nodes
             foreach (var ns in _namespaceNames)
             {
                 graph.Nodes.Add(new D3Node
                 {
                     Id = ns,
                     Group = "namespace",
-                    Label = ns
+                    Label = ns,
+                    Used = true // Namespaces are always considered "used"
                 });
             }
 
-            // 2) Class nodes
+            // 2) Add class nodes
             foreach (var cls in _classNames)
             {
-                var classLabel = cls.Split('.').Last(); // e.g. "Foo"
                 graph.Nodes.Add(new D3Node
                 {
                     Id = cls,
                     Group = "class",
-                    Label = classLabel
-                });
-            }
-            // 3) Add variable nodes
-            foreach (var varName in _variableFullNames)
-            {
-                graph.Nodes.Add(new D3Node
-                {
-                    Id = varName,
-                    Group = "variable",
-                    Label = varName.Split('.').Last() // e.g. "x" or "age"
-                });
-            }
-            // 4) Link variable -> type
-            // We'll also create nodes for the type if we want them in the graph.
-            // Or if "typeSymbol" references a class we already have, we can link to that class node.
-            // If it's external (e.g. System.Int32), we might choose to create an "external type" node or skip.
-            foreach (var kvp in _variableTypeMap)
-            {
-                var variableName = kvp.Key;     // e.g. "MyApp.Core.Foo.Bar.x"
-                var typeFullName = kvp.Value;   // e.g. "System.Int32" or "MyApp.Core.Foo"
-
-                // Add a node for the type if we want to show it
-                // or if we already do class-based nodes, see if typeFullName is in _classNames or something
-                // For demonstration, let's create a node for ANY type
-                graph.Nodes.Add(new D3Node
-                {
-                    Id = typeFullName,
-                    Group = "type",
-                    Label = typeFullName.Split('.').Last()
-                });
-
-                // Create the link (variable -> type) with a special property "reference type"
-                graph.Links.Add(new D3Link
-                {
-                    Source = variableName,
-                    Target = typeFullName,
-                    Type = "reference"  // or some property name indicating it's a variable->type link
+                    Label = cls.Split('.').Last(),
+                    Used = _usedClasses.Contains(cls)
                 });
             }
 
-            // 3) Method nodes
+            // 3) Add method nodes
             foreach (var method in _methodFullNames)
             {
-                var methodLabel = method.Split('.').Last(); // e.g. "Bar"
                 graph.Nodes.Add(new D3Node
                 {
                     Id = method,
                     Group = "method",
-                    Label = methodLabel
+                    Label = method.Split('.').Last(),
+                    Used = _usedMethods.Contains(method)
                 });
             }
+            
+            // Add property nodes
             foreach (var prop in _propertyFullNames)
             {
                 graph.Nodes.Add(new D3Node
                 {
                     Id = prop,
                     Group = "property",
-                    Label = prop.Split('.').Last()
+                    Label = prop.Split('.').Last(),
+                    Used = _usedProperties.Contains(prop)
                 });
             }
 
@@ -449,8 +483,8 @@ namespace CodeAnalysisTool
                     }
                 }
             }
-            // 4) class->property
-            // we can do the same substring logic as method->class:
+            
+            // (c) class->property
             foreach (var prop in _propertyFullNames)
             {
                 int idx = prop.LastIndexOf('.');
@@ -469,23 +503,27 @@ namespace CodeAnalysisTool
                     }
                 }
             }
-            // 5) method->property usage
+            
+            // (d) method->property usage
             foreach (var kvp in _methodPropertyMap)
             {
                 var callerMethod = kvp.Key; // e.g. "MyApp.Core.Foo.Bar"
                 foreach (var property in kvp.Value)
                 {
+                    // Check if this is a valid property in our codebase
+                    bool isExternal = !_propertyFullNames.Contains(property);
+                    
                     graph.Links.Add(new D3Link
                     {
                         Source = callerMethod,
                         Target = property,
-                        Type = "external"
+                        Type = isExternal ? "external" : "reference"
                     });
                 }
             }
 
 
-            // (c) method -> method (method calls)
+            // (e) method -> method (method calls)
             foreach (var kvp in _methodCallMap)
             {
                 var caller = kvp.Key;
@@ -494,13 +532,9 @@ namespace CodeAnalysisTool
                     // default to internal call
                     var linkType = "call";
 
-                    // Maybe mark external if the callee belongs to a namespace outside your code.
-                    // For example, if your code's root is "MyApp", anything that starts with "System."
-                    // or doesn't match your known namespaces is external:
-                    var calleeNs = callee.Split('.')[0]; 
-                    // or do a more robust check
-
-                    if (callee.StartsWith("System.") || !_namespaceNames.Any(ns => callee.StartsWith(ns)))
+                    // Check if this is an external call (a method outside our codebase)
+                    bool isExternal = !_methodFullNames.Contains(callee);
+                    if (isExternal)
                     {
                         linkType = "external";
                     }
@@ -532,6 +566,7 @@ namespace CodeAnalysisTool
         public string Id { get; set; }
         public string Group { get; set; }
         public string Label { get; set; }
+        public bool Used { get; set; } = false;
     }
 
     public class D3Link
