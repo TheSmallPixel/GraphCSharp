@@ -324,41 +324,60 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Function to get node color
-  function getNodeColor(node) {
-    // If node is not used, return red
-    if (node.used === false) {
-      return '#FF5252';
+  function getNodeColor(d) {
+    // First determine the base color by node type
+    let baseColor;
+    
+    switch (d.group) {
+      case 'namespace':
+        baseColor = '#7b3294';
+        break;
+      case 'class':
+        baseColor = '#008837';
+        break;
+      case 'interface':
+        baseColor = '#5e3c99';
+        break;
+      case 'method':
+        baseColor = '#e66101';
+        break;
+      case 'property':
+        baseColor = '#fdb863';
+        break;
+      case 'variable':
+        baseColor = '#b2abd2';
+        break;
+      default:
+        baseColor = '#878787';
     }
     
-    switch (node.group) {
-      case 'namespace':
-        return getComputedStyle(document.documentElement).getPropertyValue('--namespace-color');
-      case 'class':
-        return getComputedStyle(document.documentElement).getPropertyValue('--class-color');
-      case 'method':
-        return getComputedStyle(document.documentElement).getPropertyValue('--method-color');
-      case 'property':
-        return getComputedStyle(document.documentElement).getPropertyValue('--property-color');
-      case 'variable':
-        return getComputedStyle(document.documentElement).getPropertyValue('--variable-color');
-      case 'type':
-        return getComputedStyle(document.documentElement).getPropertyValue('--type-color');
-      case 'external':
-      case 'external-method':
-      case 'external-property':
-        return getComputedStyle(document.documentElement).getPropertyValue('--external-color');
-      default:
-        return '#999999';
+    // Adjust color based on usage status
+    if (d.used === false) {
+      // Unused nodes appear faded/lighter
+      return d3.color(baseColor).brighter(1).toString();
     }
+    
+    // External nodes get a different visual treatment
+    if (d.isexternal === true) {
+      return d3.color(baseColor).darker(0.5).toString();
+    }
+    
+    return baseColor;
   }
   
   // Function to get link color
-  function getLinkColor(link) {
-    switch(link.type) {
-      case 'reference': return 'blue';
-      case 'external': return 'red';
-      case 'call': return '#555';
-      default: return '#999';
+  function getLinkColor(d) {
+    switch (d.type) {
+      case 'containment':
+        return '#999';
+      case 'call':
+        return '#555';
+      case 'reference':
+        return 'blue';
+      case 'external':
+        return '#a64d79';
+      default:
+        return '#ccc';
     }
   }
   
@@ -697,76 +716,90 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Apply all filters
   function applyFilters() {
+    console.log("Applying filters...");
+    
+    // Make sure the visualization is initialized
     if (!gContainer) {
-      console.error("Cannot apply filters, gContainer is not initialized yet");
+      console.error("Cannot apply filters - gContainer not initialized");
       return;
     }
     
-    console.log("Applying filters...");
+    // Get all checked filters by class
+    const nodeTypes = Array.from(document.querySelectorAll('.node-filter:checked')).map(el => el.value);
+    const linkTypes = Array.from(document.querySelectorAll('.link-filter:checked')).map(el => el.value);
     
-    // Node type filters (class, method, etc.)
-    const nodeTypes = [];
-    document.querySelectorAll('.node-filter:checked').forEach(filter => {
-      nodeTypes.push(filter.value);
-    });
-    console.log("Node types:", nodeTypes);
-    
-    // Link type filters
-    const linkTypes = [];
-    document.querySelectorAll('.link-filter:checked').forEach(filter => {
-      linkTypes.push(filter.value);
-    });
-    console.log("Link types:", linkTypes);
-    
-    // Usage filters
+    // Get usage filters (used/unused)
     const showUsed = document.getElementById('filter-used')?.checked ?? true;
     const showUnused = document.getElementById('filter-unused')?.checked ?? true;
-    console.log("Usage filters:", { showUsed, showUnused });
     
-    // Library filters
+    // Get library filters (internal/external)
     const showInternal = document.getElementById('filter-internal')?.checked ?? true;
     const showExternal = document.getElementById('filter-external')?.checked ?? true;
-    console.log("Library filters:", { showInternal, showExternal });
     
-    // Filter nodes
-    gContainer.selectAll('.node').style('display', function(d) {
-      // Node type filter
+    console.log("Active filters:", {
+      nodeTypes, 
+      linkTypes, 
+      usage: { showUsed, showUnused },
+      origin: { showInternal, showExternal }
+    });
+    
+    // Apply node filters
+    gContainer.selectAll('.node').each(function(d) {
+      const node = d3.select(this);
+      let visible = true;
+      
+      // Check node type filter
       if (nodeTypes.length > 0 && !nodeTypes.includes(d.group)) {
-        return 'none';
+        visible = false;
       }
       
-      // Usage filter
-      if (d.used === true && !showUsed) return 'none';
-      if (d.used !== true && !showUnused) return 'none';
+      // Check usage filter
+      if (visible) {
+        if (d.used && !showUsed) visible = false;
+        if (!d.used && !showUnused) visible = false;
+      }
       
-      // Library filter
-      if (d.isexternal === true && !showExternal) return 'none';
-      if (d.isexternal !== true && !showInternal) return 'none';
+      // Check origin filter
+      if (visible) {
+        if (d.isexternal && !showExternal) visible = false;
+        if (!d.isexternal && !showInternal) visible = false;
+      }
       
-      return null;
+      // Apply visibility
+      node.style('display', visible ? null : 'none');
+      node.attr('data-visible', visible ? 'true' : 'false');
     });
     
-    // Filter links
-    gContainer.selectAll('.link').style('display', function(d) {
-      // Link type filter
+    // Apply link filters - hide links if either connected node is hidden
+    gContainer.selectAll('.link').each(function(d) {
+      const link = d3.select(this);
+      let visible = true;
+      
+      // Check link type filter
       if (linkTypes.length > 0 && !linkTypes.includes(d.type)) {
-        return 'none';
+        visible = false;
       }
       
-      // Check if connected nodes are visible
-      const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
-      const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+      // Check connected nodes visibility
+      if (visible) {
+        const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+        const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+        
+        const sourceNode = gContainer.select(`.node[data-id="${sourceId}"]`);
+        const targetNode = gContainer.select(`.node[data-id="${targetId}"]`);
+        
+        if (sourceNode.empty() || targetNode.empty() || 
+            sourceNode.attr('data-visible') === 'false' || 
+            targetNode.attr('data-visible') === 'false') {
+          visible = false;
+        }
+      }
       
-      const sourceVisible = !gContainer.select(`.node[data-id="${sourceId}"]`).empty() &&
-                           gContainer.select(`.node[data-id="${sourceId}"]`).style('display') !== 'none';
-      
-      const targetVisible = !gContainer.select(`.node[data-id="${targetId}"]`).empty() &&
-                           gContainer.select(`.node[data-id="${targetId}"]`).style('display') !== 'none';
-      
-      return (sourceVisible && targetVisible) ? null : 'none';
+      // Apply visibility
+      link.style('display', visible ? null : 'none');
     });
     
-    console.log("Filters applied");
+    console.log("Filters applied successfully");
   }
   
   // Handle search input
@@ -955,51 +988,261 @@ document.addEventListener('DOMContentLoaded', function() {
     d3.select(event.currentTarget).classed('hover', false);
   }
   
+  // Show detailed information about a node
+  function showNodeDetails(node) {
+    console.log("Showing details for node:", node.id);
+    
+    const detailTitle = document.getElementById('detail-title');
+    const detailContent = document.getElementById('detail-content');
+    
+    if (!detailTitle || !detailContent) {
+      console.error("Detail panel elements not found");
+      return;
+    }
+    
+    // Set node title
+    detailTitle.textContent = node.label || node.name || node.id.split('.').pop();
+    
+    // Clear previous content
+    detailContent.innerHTML = '';
+    
+    // Create basic info section
+    const infoSection = document.createElement('div');
+    infoSection.className = 'detail-section';
+    
+    // Add node type
+    const typeEl = document.createElement('p');
+    typeEl.innerHTML = `<strong>Type:</strong> ${node.group.charAt(0).toUpperCase() + node.group.slice(1)}`;
+    infoSection.appendChild(typeEl);
+    
+    // Add full name/id
+    const idEl = document.createElement('p');
+    idEl.innerHTML = `<strong>Full Name:</strong> ${node.id}`;
+    infoSection.appendChild(idEl);
+    
+    // Add usage status
+    const usageEl = document.createElement('p');
+    usageEl.innerHTML = `<strong>Usage Status:</strong> <span class="${node.used ? 'used' : 'unused'}">${node.used ? 'Used' : 'Unused'}</span>`;
+    infoSection.appendChild(usageEl);
+    
+    // Add origin information
+    const originEl = document.createElement('p');
+    originEl.innerHTML = `<strong>Origin:</strong> <span class="${node.isexternal ? 'external' : 'internal'}">${node.isexternal ? 'External Library' : 'Internal Code'}</span>`;
+    infoSection.appendChild(originEl);
+    
+    // Add to detail content
+    detailContent.appendChild(infoSection);
+    
+    // Connections section for related nodes
+    const connectionsSection = document.createElement('div');
+    connectionsSection.className = 'detail-section';
+    connectionsSection.innerHTML = '<h3>Connections</h3>';
+    
+    // Get connected nodes
+    const connections = [];
+    gContainer.selectAll('.link').each(function(d) {
+      const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+      const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+      
+      if (sourceId === node.id) {
+        connections.push({
+          id: targetId,
+          direction: 'outgoing',
+          type: d.type
+        });
+      } else if (targetId === node.id) {
+        connections.push({
+          id: sourceId,
+          direction: 'incoming',
+          type: d.type
+        });
+      }
+    });
+    
+    // If we have connections, display them
+    if (connections.length > 0) {
+      const connectionsList = document.createElement('ul');
+      connectionsList.className = 'connections-list';
+      
+      connections.forEach(conn => {
+        const connNode = graph.nodes.find(n => n.id === conn.id);
+        if (connNode) {
+          const listItem = document.createElement('li');
+          listItem.className = `connection ${conn.direction} ${conn.type}`;
+          listItem.innerHTML = `
+            <span class="connection-type">${conn.type}</span>
+            <span class="connection-direction">${conn.direction === 'incoming' ? 'from' : 'to'}</span>
+            <span class="connection-name">${connNode.label || connNode.name || connNode.id.split('.').pop()}</span>
+            <span class="connection-group">(${connNode.group})</span>
+          `;
+          
+          // Make the connection clickable
+          listItem.addEventListener('click', () => {
+            nodeClicked({ currentTarget: gContainer.select(`.node[data-id="${connNode.id}"]`).node() }, connNode);
+          });
+          
+          connectionsList.appendChild(listItem);
+        }
+      });
+      
+      connectionsSection.appendChild(connectionsList);
+    } else {
+      connectionsSection.innerHTML += '<p>No connections found for this node.</p>';
+    }
+    
+    detailContent.appendChild(connectionsSection);
+    
+    console.log("Node details displayed");
+  }
+  
+  // Add CSS styles for proper visualization
+  function addStyles() {
+    const styleElement = document.createElement('style');
+    
+    styleElement.textContent = `
+      /* Node styling */
+      .node circle {
+        stroke: #fff;
+        stroke-width: 1.5px;
+      }
+      
+      .node.selected circle {
+        stroke: #ff0;
+        stroke-width: 3px;
+      }
+      
+      .node.hover circle {
+        stroke: #f80;
+        stroke-width: 2px;
+      }
+      
+      .node text {
+        font-family: sans-serif;
+        font-size: 10px;
+        pointer-events: none;
+        text-shadow: 0 1px 0 #000, 1px 0 0 #000, 0 -1px 0 #000, -1px 0 0 #000;
+      }
+      
+      /* Link styling */
+      .link {
+        stroke-opacity: 0.6;
+      }
+      
+      /* Highlighting */
+      .node.highlighted circle {
+        stroke: #ff0;
+        stroke-width: 3px;
+      }
+      
+      .node.connected circle {
+        stroke: #f80;
+        stroke-width: 2px;
+      }
+      
+      .node.faded {
+        opacity: 0.3;
+      }
+      
+      .link.faded {
+        opacity: 0.1;
+      }
+      
+      .link.highlighted {
+        stroke-width: 3px;
+        stroke-opacity: 1;
+      }
+      
+      /* Detail panel styling */
+      .detail-section {
+        margin-bottom: 20px;
+      }
+      
+      .connection {
+        cursor: pointer;
+        padding: 8px;
+        margin: 5px 0;
+        border-radius: 4px;
+        background: #f5f5f5;
+      }
+      
+      .connection:hover {
+        background: #e0e0e0;
+      }
+      
+      .connection-type {
+        font-weight: bold;
+        margin-right: 5px;
+      }
+      
+      .connection-name {
+        color: #333;
+      }
+      
+      .used {
+        color: green;
+      }
+      
+      .unused {
+        color: red;
+      }
+      
+      .internal {
+        color: blue;
+      }
+      
+      .external {
+        color: purple;
+      }
+      
+      .connections-list {
+        list-style: none;
+        padding: 0;
+      }
+    `;
+    
+    document.head.appendChild(styleElement);
+  }
+  
   // Initialize the visualization
   initVisualization();
+  addStyles();
 });
 
 // Add direct filter event listeners
-window.addEventListener('DOMContentLoaded', function() {
-  console.log("Setting up direct filter listeners");
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("Setting up additional filter event listeners");
   
-  // Node filters
+  // Node type filters
   document.querySelectorAll('.node-filter').forEach(filter => {
-    filter.addEventListener('change', function() {
-      console.log(`Node filter changed: ${this.value}=${this.checked}`);
-      if (typeof applyFilters === 'function') {
-        applyFilters();
-      }
+    filter.addEventListener('change', () => {
+      console.log('Node filter changed:', filter.value, filter.checked);
+      applyFilters();
+    });
+  });
+  
+  // Link type filters
+  document.querySelectorAll('.link-filter').forEach(filter => {
+    filter.addEventListener('change', () => {
+      console.log('Link filter changed:', filter.value, filter.checked);
+      applyFilters();
     });
   });
   
   // Usage filters
-  document.getElementById('filter-used')?.addEventListener('change', function() {
-    console.log(`Used filter changed: ${this.checked}`);
-    if (typeof applyFilters === 'function') {
+  document.querySelectorAll('.usage-filter').forEach(filter => {
+    filter.addEventListener('change', () => {
+      console.log('Usage filter changed:', filter.value, filter.checked);
       applyFilters();
-    }
-  });
-  
-  document.getElementById('filter-unused')?.addEventListener('change', function() {
-    console.log(`Unused filter changed: ${this.checked}`);
-    if (typeof applyFilters === 'function') {
-      applyFilters();
-    }
+    });
   });
   
   // Library filters
-  document.getElementById('filter-internal')?.addEventListener('change', function() {
-    console.log(`Internal filter changed: ${this.checked}`);
-    if (typeof applyFilters === 'function') {
+  document.querySelectorAll('.library-filter').forEach(filter => {
+    filter.addEventListener('change', () => {
+      console.log('Library filter changed:', filter.value, filter.checked);
       applyFilters();
-    }
+    });
   });
   
-  document.getElementById('filter-external')?.addEventListener('change', function() {
-    console.log(`External filter changed: ${this.checked}`);
-    if (typeof applyFilters === 'function') {
-      applyFilters();
-    }
-  });
+  console.log("Additional event listeners setup complete");
 });
