@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (refs.incoming.length <= 1 && 
             (!refs.incoming[0] || refs.incoming[0].type === 'containment')) {
           unusedElements.add(node.id);
-          node.unused = true;
+          node.used = false;
         }
       }
     });
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const node = gContainer.selectAll('.node')
       .data(graph.nodes)
       .enter().append('g')
-      .attr('class', d => `node ${d.unused ? 'unused' : 'used'}`)
+      .attr('class', d => `node ${d.used === false ? 'unused' : 'used'}`)
       .attr('data-id', d => d.id)
       .attr('data-group', d => d.group)
       .call(d3.drag()
@@ -226,12 +226,12 @@ document.addEventListener('DOMContentLoaded', function() {
       .attr('fill', getNodeColor)
       .attr('stroke', d => {
         // Add stroke for unused elements
-        if (d.unused) {
+        if (d.used === false) {
           return getComputedStyle(document.documentElement).getPropertyValue('--unused-color');
         }
         return '#fff';
       })
-      .attr('stroke-width', d => d.unused ? 2 : 1.5);
+      .attr('stroke-width', d => d.used === false ? 2 : 1.5);
     
     // Add labels to nodes
     node.append('text')
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to get node color
   function getNodeColor(node) {
     // If node is not used, return red
-    if (node.unused) {
+    if (node.used === false) {
       return '#FF5252';
     }
     
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('tooltip-title').textContent = d.label;
     document.getElementById('tooltip-type').textContent = d.group.charAt(0).toUpperCase() + d.group.slice(1);
-    document.getElementById('tooltip-used').textContent = d.unused ? 'No' : 'Yes';
+    document.getElementById('tooltip-used').textContent = d.used === false ? 'No' : 'Yes';
     
     // Highlight connected links and nodes
     highlightConnections(d.id);
@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
     contentEl.appendChild(infoSection);
     
     // Unused warning if applicable
-    if (node.unused) {
+    if (node.used === false) {
       const warningEl = document.createElement('div');
       warningEl.className = 'unused-warning';
       warningEl.innerHTML = `
@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
       gContainer.selectAll('.node circle')
         .transition().duration(500)
         .attr('fill', d => {
-          if (highlightUnused && d.unused) {
+          if (highlightUnused && d.used === false) {
             return getComputedStyle(document.documentElement).getPropertyValue('--unused-color');
           }
           return getNodeColor(d);
@@ -837,8 +837,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     gContainer.selectAll('.node')
       .style('display', d => {
-        if (d.unused && !showUnused) return 'none';
-        if (!d.unused && !showUsed) return 'none';
+        if (d.used === false && !showUnused) return 'none';
+        if (d.used !== false && !showUsed) return 'none';
         return null; // Use current display based on node type filters
       });
     
