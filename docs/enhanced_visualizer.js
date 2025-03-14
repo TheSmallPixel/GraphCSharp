@@ -24,55 +24,89 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize the visualization
   function init() {
+    console.log("Initializing visualization...");
     // Load data and set up the visualization
     loadGraph();
   }
   
   // Set up the visualization after data is loaded
   function setupVisualization() {
+    console.log("Setting up visualization...");
+    
+    // Create SVG and container for the visualization
+    svg = d3.select('#chart')
+      .append('svg')
+      .attr('width', '100%')
+      .attr('height', '100%');
+    
+    // Add a background rect to handle zoom events on empty space
+    svg.append('rect')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('fill', 'transparent');
+    
+    gContainer = svg.append('g')
+      .attr('class', 'everything');
+    
+    // Setup zoom behavior
+    zoomBehavior = d3.zoom()
+      .scaleExtent([0.1, 10])
+      .on('zoom', (event) => {
+        gContainer.attr('transform', event.transform);
+      });
+    
+    svg.call(zoomBehavior);
+    
     // Process data
     processData();
-    
-    // Calculate stats
-    updateStats();
     
     // Draw graph
     drawGraph();
     
+    // Calculate stats
+    updateStats();
+    
     // Set up event listeners
     setupEventListeners();
+    
+    console.log("Visualization setup complete");
   }
   
   // Load graph data
   function loadGraph() {
-    d3.json('graph.json').then(data => {
-      // Store the data
-      graph = data;
-      
-      // Ensure all nodes have the required properties
-      graph.nodes.forEach(node => {
-        // Make sure all properties exist
-        node.group = node.group || '';
-        node.label = node.label || '';
-        node.id = node.id || '';
-        node.used = node.used || false;
+    console.log("Loading graph data...");
+    d3.json('graph.json')
+      .then(data => {
+        console.log("Graph data loaded successfully");
+        // Store the data
+        graph = data;
         
-        // Convert isexternal from string to boolean if needed
-        // This handles potential issues with JSON serialization
-        if (typeof node.isexternal === 'string') {
-          node.isexternal = node.isexternal.toLowerCase() === 'true';
-        } else {
-          node.isexternal = Boolean(node.isexternal);
-        }
+        // Ensure all nodes have the required properties
+        graph.nodes.forEach(node => {
+          // Make sure all properties exist
+          node.group = node.group || '';
+          node.label = node.label || '';
+          node.id = node.id || '';
+          node.used = node.used || false;
+          
+          // Convert isexternal from string to boolean if needed
+          // This handles potential issues with JSON serialization
+          if (typeof node.isexternal === 'string') {
+            node.isexternal = node.isexternal.toLowerCase() === 'true';
+          } else {
+            node.isexternal = Boolean(node.isexternal);
+          }
+          
+          console.log(`Node ${node.id}: isexternal=${node.isexternal} (${typeof node.isexternal}), group=${node.group}, used=${node.used}`);
+        });
         
-        console.log(`Node ${node.id}: isexternal=${node.isexternal} (type: ${typeof node.isexternal})`);
+        // Set up visualization
+        setupVisualization();
+      })
+      .catch(error => {
+        console.error('Error loading graph data:', error);
+        alert("Failed to load graph data. Check the console for details.");
       });
-      
-      // Set up visualization
-      setupVisualization();
-    }).catch(error => {
-      console.error('Error loading graph data:', error);
-    });
   }
   
   // Process the data to analyze usage patterns
@@ -142,30 +176,6 @@ document.addEventListener('DOMContentLoaded', function() {
   function drawGraph() {
     // Clear previous visualization
     d3.select('#chart').html('');
-    
-    // Create SVG and container for the visualization
-    svg = d3.select('#chart')
-      .append('svg')
-      .attr('width', '100%')
-      .attr('height', '100%');
-    
-    // Add a background rect to handle zoom events on empty space
-    svg.append('rect')
-      .attr('width', '100%')
-      .attr('height', '100%')
-      .attr('fill', 'transparent');
-    
-    gContainer = svg.append('g')
-      .attr('class', 'everything');
-    
-    // Setup zoom behavior
-    zoomBehavior = d3.zoom()
-      .scaleExtent([0.1, 10])
-      .on('zoom', (event) => {
-        gContainer.attr('transform', event.transform);
-      });
-    
-    svg.call(zoomBehavior);
     
     // Get element and window sizes
     const width = chartContainer.clientWidth;
@@ -253,10 +263,35 @@ document.addEventListener('DOMContentLoaded', function() {
       .attr('data-used', d => d.used)
       .attr('data-external', d => d.isexternal)
       .call(d3.drag()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended))
-      .on('click', handleNodeClick);
+        .on('start', function(event, d) {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on('drag', function(event, d) {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on('end', function(event, d) {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        }))
+      .on('click', function(event, d) {
+        // Clear previous selection
+        gContainer.selectAll('.node.selected').classed('selected', false);
+        
+        // Mark this node as selected
+        d3.select(this).classed('selected', true);
+        selectedNode = d;
+        
+        // Highlight connected nodes
+        highlightNodeConnections(d.id);
+        
+        // Show node details panel
+        showNodeDetails(d);
+        detailPanel.classList.add('active');
+      });
     
     // Add circles to nodes
     node.append('circle')
@@ -728,7 +763,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Highlight connections for a node
-  function highlightConnections(nodeId) {
+  function highlightNodeConnections(nodeId) {
     // Reset previous highlights
     resetHighlights();
     
@@ -1052,9 +1087,15 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Update node stats
   function updateStats() {
+    if (!graph || !graph.nodes) {
+      console.log("Cannot update stats - graph data not loaded yet");
+      return;
+    }
+  
     loadingOverlay.style.display = 'flex';
     
     setTimeout(() => {
+      // Calculate stats directly
       const stats = {
         namespaces: graph.nodes.filter(n => n.group === 'namespace').length,
         classes: graph.nodes.filter(n => n.group === 'class').length,
@@ -1067,6 +1108,7 @@ document.addEventListener('DOMContentLoaded', function() {
         total: graph.nodes.length
       };
       
+      // Update DOM with stats
       document.getElementById('namespace-count').textContent = stats.namespaces;
       document.getElementById('class-count').textContent = stats.classes;
       document.getElementById('method-count').textContent = stats.methods;
