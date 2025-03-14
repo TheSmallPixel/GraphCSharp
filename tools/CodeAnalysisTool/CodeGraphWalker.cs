@@ -395,6 +395,32 @@ namespace CodeAnalysisTool
         {
             // Create a D3 force graph
             var graph = new D3Graph();
+            
+            // Track external nodes we need to create
+            var externalNodes = new HashSet<string>();
+            
+            // First pass: collect all external references that need nodes
+            foreach (var kvp in _methodCallMap)
+            {
+                foreach (var callee in kvp.Value)
+                {
+                    if (!_methodFullNames.Contains(callee))
+                    {
+                        externalNodes.Add(callee);
+                    }
+                }
+            }
+            
+            foreach (var kvp in _methodPropertyMap)
+            {
+                foreach (var property in kvp.Value)
+                {
+                    if (!_propertyFullNames.Contains(property))
+                    {
+                        externalNodes.Add(property);
+                    }
+                }
+            }
 
             // 1) Add namespace nodes
             foreach (var ns in _namespaceNames)
@@ -443,7 +469,33 @@ namespace CodeAnalysisTool
                     Used = _usedProperties.Contains(prop)
                 });
             }
-
+            
+            // Add external nodes for references that would be dangling otherwise
+            foreach (var externalNode in externalNodes)
+            {
+                string group = "external";
+                if (externalNode.EndsWith("()"))
+                {
+                    group = "external-method";
+                }
+                else
+                {
+                    // Check if it looks like a property
+                    var lastPart = externalNode.Split('.').Last();
+                    if (char.IsUpper(lastPart[0]))
+                    {
+                        group = "external-property";
+                    }
+                }
+                
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = externalNode,
+                    Group = group,
+                    Label = externalNode.Split('.').Last(),
+                    Used = true // External nodes are always "used" since they're referenced
+                });
+            }
 
             // 4) Links:
             // (a) namespace -> class
@@ -510,18 +562,21 @@ namespace CodeAnalysisTool
                 var callerMethod = kvp.Key; // e.g. "MyApp.Core.Foo.Bar"
                 foreach (var property in kvp.Value)
                 {
-                    // Check if this is a valid property in our codebase
-                    bool isExternal = !_propertyFullNames.Contains(property);
-                    
-                    graph.Links.Add(new D3Link
+                    // Make sure both ends of the link exist
+                    if (NodeExists(graph, callerMethod) && NodeExists(graph, property))
                     {
-                        Source = callerMethod,
-                        Target = property,
-                        Type = isExternal ? "external" : "reference"
-                    });
+                        // Check if this is a valid property in our codebase
+                        bool isExternal = !_propertyFullNames.Contains(property);
+                        
+                        graph.Links.Add(new D3Link
+                        {
+                            Source = callerMethod,
+                            Target = property,
+                            Type = isExternal ? "external" : "reference"
+                        });
+                    }
                 }
             }
-
 
             // (e) method -> method (method calls)
             foreach (var kvp in _methodCallMap)
@@ -529,26 +584,38 @@ namespace CodeAnalysisTool
                 var caller = kvp.Key;
                 foreach (var callee in kvp.Value)
                 {
-                    // default to internal call
-                    var linkType = "call";
-
-                    // Check if this is an external call (a method outside our codebase)
-                    bool isExternal = !_methodFullNames.Contains(callee);
-                    if (isExternal)
+                    // Make sure both ends of the link exist
+                    if (NodeExists(graph, caller) && NodeExists(graph, callee))
                     {
-                        linkType = "external";
+                        // default to internal call
+                        var linkType = "call";
+
+                        // Check if this is an external call (a method outside our codebase)
+                        bool isExternal = !_methodFullNames.Contains(callee);
+                        if (isExternal)
+                        {
+                            linkType = "external";
+                        }
+
+                        graph.Links.Add(new D3Link
+                        {
+                            Source = caller,
+                            Target = callee,
+                            Type = linkType
+                        });
                     }
-
-                    graph.Links.Add(new D3Link
-                    {
-                        Source = caller,
-                        Target = callee,
-                        Type = linkType
-                    });
                 }
             }
 
             return graph;
+        }
+        
+        /// <summary>
+        /// Checks if a node with the given ID exists in the graph
+        /// </summary>
+        private bool NodeExists(D3Graph graph, string nodeId)
+        {
+            return graph.Nodes.Any(n => n.Id == nodeId);
         }
     }
 

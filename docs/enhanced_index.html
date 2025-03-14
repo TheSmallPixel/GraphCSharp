@@ -20,6 +20,7 @@
       --bg-color: #f5f5f5;
       --link-color: #7f8c8d;
       --active-color: #16a085;
+      --external-color: #ce9178;
     }
     
     body {
@@ -535,7 +536,7 @@
         </label>
         <label>
           <input type="checkbox" class="link-filter" value="external" checked>
-          <span class="color-indicator" style="background-color: red"></span>
+          <span class="color-indicator" style="background-color: var(--external-color)"></span>
           External
         </label>
       </div>
@@ -604,6 +605,10 @@
       <div class="legend-item">
         <div class="legend-color" style="background-color: var(--variable-color)"></div>
         <div>Variable</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: var(--external-color)"></div>
+        <div>External</div>
       </div>
     </div>
     

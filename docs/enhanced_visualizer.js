@@ -223,13 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (d.group === 'variable') return 5;
         return 6;
       })
-      .attr('fill', d => {
-        // If highlighting unused and the element is unused, use the unused color
-        if (highlightUnused && d.unused) {
-          return getComputedStyle(document.documentElement).getPropertyValue('--unused-color');
-        }
-        return colorMap[d.group] || '#ccc';
-      })
+      .attr('fill', getNodeColor)
       .attr('stroke', d => {
         // Add stroke for unused elements
         if (d.unused) {
@@ -284,6 +278,35 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Reset zoom
     resetZoom();
+  }
+  
+  // Function to get node color
+  function getNodeColor(node) {
+    // If node is not used, return red
+    if (node.unused) {
+      return '#FF5252';
+    }
+    
+    switch (node.group) {
+      case 'namespace':
+        return getComputedStyle(document.documentElement).getPropertyValue('--namespace-color');
+      case 'class':
+        return getComputedStyle(document.documentElement).getPropertyValue('--class-color');
+      case 'method':
+        return getComputedStyle(document.documentElement).getPropertyValue('--method-color');
+      case 'property':
+        return getComputedStyle(document.documentElement).getPropertyValue('--property-color');
+      case 'variable':
+        return getComputedStyle(document.documentElement).getPropertyValue('--variable-color');
+      case 'type':
+        return getComputedStyle(document.documentElement).getPropertyValue('--type-color');
+      case 'external':
+      case 'external-method':
+      case 'external-property':
+        return getComputedStyle(document.documentElement).getPropertyValue('--external-color');
+      default:
+        return '#999999';
+    }
   }
   
   // Switch to hierarchical layout
@@ -719,15 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
           if (highlightUnused && d.unused) {
             return getComputedStyle(document.documentElement).getPropertyValue('--unused-color');
           }
-          const colorMap = {
-            namespace: getComputedStyle(document.documentElement).getPropertyValue('--namespace-color'),
-            class: getComputedStyle(document.documentElement).getPropertyValue('--class-color'),
-            method: getComputedStyle(document.documentElement).getPropertyValue('--method-color'),
-            property: getComputedStyle(document.documentElement).getPropertyValue('--property-color'),
-            variable: getComputedStyle(document.documentElement).getPropertyValue('--variable-color'),
-            type: getComputedStyle(document.documentElement).getPropertyValue('--type-color')
-          };
-          return colorMap[d.group] || '#ccc';
+          return getNodeColor(d);
         });
     });
     
