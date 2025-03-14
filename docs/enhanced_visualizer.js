@@ -13,11 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
   let highlightUnused = false;
 
   // DOM Elements
-  const chartContainer = document.getElementById('chart');
-  const detailPanel = document.getElementById('detail-panel');
-  const loadingOverlay = document.getElementById('loading-overlay');
-  const tooltip = document.getElementById('tooltip');
-  const filterContainer = document.getElementById('filters');
+  let chartContainer = document.getElementById('chart');
+  let detailPanel = document.getElementById('detail-panel');
+  let loadingOverlay = document.getElementById('loading-overlay');
+  let tooltip = document.getElementById('tooltip');
+  let filterContainer = document.getElementById('filters');
   
   // Track current visualization state
   let unusedElements = new Set();
@@ -276,9 +276,10 @@ document.addEventListener('DOMContentLoaded', function() {
       .enter()
       .append('line')
       .attr('class', 'link')
-      .attr('data-source', d => d.source.id || d.source)
-      .attr('data-target', d => d.target.id || d.target)
-      .attr('data-type', d => d.type)
+      .attr('data-id', (d, i) => `link-${i}`)
+      .attr('data-source', d => typeof d.source === 'object' ? d.source.id : d.source)
+      .attr('data-target', d => typeof d.target === 'object' ? d.target.id : d.target)
+      .attr('data-type', d => d.type || 'default')
       .style('stroke', d => getLinkColor(d))
       .style('stroke-width', 1.5);
     
@@ -287,15 +288,15 @@ document.addEventListener('DOMContentLoaded', function() {
       .data(graph.nodes)
       .enter()
       .append('g')
-      .attr('class', 'node')
+      .attr('class', d => `node ${d.used ? 'used' : 'unused'}`)
       .attr('data-id', d => d.id)
       .attr('data-group', d => d.group)
-      .attr('data-used', d => d.used)
-      .attr('data-external', d => d.isexternal)
+      .attr('data-used', d => d.used ? 'true' : 'false')
+      .attr('data-external', d => d.isexternal ? 'true' : 'false')
       .call(d3.drag()
-        .on('start', dragStarted)
+        .on('start', dragstarted)
         .on('drag', dragged)
-        .on('end', dragEnded))
+        .on('end', dragended))
       .on('mouseover', nodeMouseOver)
       .on('mouseout', nodeMouseOut)
       .on('click', nodeClicked);
@@ -311,12 +312,15 @@ document.addEventListener('DOMContentLoaded', function() {
     nodes.append('text')
       .attr('dy', 4)
       .attr('text-anchor', 'middle')
-      .text(d => d.name)
+      .text(d => d.name || d.label || d.id.split('.').pop())
       .style('font-size', '10px')
       .style('fill', '#fff')
       .style('pointer-events', 'none');
     
     console.log("Graph drawing complete");
+    
+    // Apply initial filters
+    setTimeout(applyFilters, 100);
   }
   
   // Function to get node color
@@ -875,10 +879,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function dragended(event, d) {
     if (!event.active) simulation.alphaTarget(0);
-    if (currentLayout === 'force') {
-      d.fx = null;
-      d.fy = null;
-    }
+    d.fx = null;
+    d.fy = null;
   }
   
   // Hide loading overlay
