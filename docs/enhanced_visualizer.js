@@ -503,12 +503,15 @@ document.addEventListener('DOMContentLoaded', function() {
       infoSection.appendChild(locationEl);
     }
     
+    // Add origin information (internal/external)
+    const originEl = document.createElement('p');
+    originEl.innerHTML = `<strong>Origin:</strong> ${node.isexternal ? 'External Library' : 'Internal Code'}`;
+    infoSection.appendChild(originEl);
+    
     const usageCount = nodeUsageCounts.get(node.id) || 0;
     const usageEl = document.createElement('p');
     usageEl.innerHTML = `<strong>Usage Count:</strong> ${usageCount} 
-      <span class="usage-stat ${usageCount === 0 ? 'usage-none' : (usageCount > 3 ? 'usage-high' : 'usage-low')}">
-        ${usageCount === 0 ? 'Unused' : (usageCount > 3 ? 'Frequent' : 'Low')}
-      </span>`;
+      <span class="usage-status">(${node.used ? 'Used' : 'Unused'})</span>`;
     infoSection.appendChild(usageEl);
     
     contentEl.appendChild(infoSection);
@@ -816,17 +819,13 @@ document.addEventListener('DOMContentLoaded', function() {
   function applyFilters() {
     // Get selected node types
     const selectedGroups = [];
-    document.querySelectorAll('.node-filter').forEach(filter => {
-      if (filter.checked) {
-        // Extract group from id (e.g., 'filter-namespace' -> 'namespace')
-        const group = filter.id.replace('filter-', '');
-        selectedGroups.push(group);
-      }
+    document.querySelectorAll('.node-filter:checked').forEach(filter => {
+      selectedGroups.push(filter.value);
     });
     
     // Get usage filter state
-    const showUsed = document.getElementById('filter-used').checked;
-    const showUnused = document.getElementById('filter-unused').checked;
+    const showUsed = document.querySelector('.usage-filter[value="used"]').checked;
+    const showUnused = document.querySelector('.usage-filter[value="unused"]').checked;
     
     // Get library filter state
     const showInternal = document.getElementById('filter-internal').checked;
@@ -895,39 +894,36 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    // First hide all nodes
-    gContainer.selectAll('.node').style('display', 'none');
+    // Apply search filter
+    gContainer.selectAll('.node')
+      .style('display', d => {
+        // First apply regular filters
+        if (!d.id.toLowerCase().includes(searchTerm) && 
+            !d.label.toLowerCase().includes(searchTerm)) {
+          return 'none';
+        }
+        // Otherwise, show if it passes regular filters
+        return null;
+      });
     
-    // Show nodes that match the search
-    const matchedNodes = new Set();
+    // Update links for visible nodes
+    filterLinksForHiddenNodes();
+  }
+  
+  // Update node stats
+  function updateStats() {
+    loadingOverlay.style.display = 'flex';
     
-    gContainer.selectAll('.node').each(function(d) {
-      if (d.label.toLowerCase().includes(searchTerm) || 
-          d.id.toLowerCase().includes(searchTerm)) {
-        d3.select(this).style('display', 'block');
-        matchedNodes.add(d.id);
-      }
-    });
-    
-    // Show links between matched nodes
-    gContainer.selectAll('.link').style('display', d => {
-      const sourceId = d.source.id || d.source;
-      const targetId = d.target.id || d.target;
+    setTimeout(() => {
+      const stats = calculateStats();
+      document.getElementById('namespace-count').textContent = stats.namespaces;
+      document.getElementById('class-count').textContent = stats.classes;
+      document.getElementById('method-count').textContent = stats.methods;
+      document.getElementById('property-count').textContent = stats.properties;
+      document.getElementById('unused-count').textContent = stats.unused;
       
-      if (matchedNodes.has(sourceId) && matchedNodes.has(targetId)) {
-        return 'block';
-      }
-      return 'none';
-    });
-    
-    // If there's exactly one match, focus on it
-    if (matchedNodes.size === 1) {
-      const nodeId = matchedNodes.values().next().value;
-      const matchedNode = graph.nodes.find(n => n.id === nodeId);
-      if (matchedNode) {
-        focusNode(matchedNode);
-      }
-    }
+      loadingOverlay.style.display = 'none';
+    }, 0);
   }
   
   // Drag event handlers
@@ -954,108 +950,6 @@ document.addEventListener('DOMContentLoaded', function() {
   function hideLoading() {
     loadingOverlay.style.display = 'none';
   }
-  
-  // Add type filters
-  const filterOptions = [
-    { id: 'filter-namespace', group: 'namespace', label: 'Namespaces', checked: true },
-    { id: 'filter-class', group: 'class', label: 'Classes', checked: true },
-    { id: 'filter-method', group: 'method', label: 'Methods', checked: true },
-    { id: 'filter-property', group: 'property', label: 'Properties', checked: true },
-    { id: 'filter-variable', group: 'variable', label: 'Variables', checked: true }
-  ];
-  
-  // Usage filter options
-  const usageFilterOptions = [
-    { id: 'filter-used', status: 'used', label: 'Used Elements', checked: true },
-    { id: 'filter-unused', status: 'unused', label: 'Unused Elements', checked: true }
-  ];
-  
-  // Library filter options
-  const libraryFilterOptions = [
-    { id: 'filter-internal', origin: 'internal', label: 'Internal Code', checked: true },
-    { id: 'filter-external', origin: 'external', label: 'External Libraries', checked: false }
-  ];
-  
-  // Add type filters
-  const typeFilterSection = document.createElement('div');
-  typeFilterSection.className = 'filter-section';
-  typeFilterSection.innerHTML = '<h3>Element Types</h3>';
-  
-  filterOptions.forEach(option => {
-    const filterItem = document.createElement('div');
-    filterItem.className = 'filter-item';
-    
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = option.id;
-    checkbox.className = 'node-filter';
-    checkbox.checked = option.checked;
-    checkbox.addEventListener('change', applyFilters);
-    
-    const label = document.createElement('label');
-    label.htmlFor = option.id;
-    label.textContent = option.label;
-    
-    filterItem.appendChild(checkbox);
-    filterItem.appendChild(label);
-    typeFilterSection.appendChild(filterItem);
-  });
-  
-  filterContainer.appendChild(typeFilterSection);
-  
-  // Add usage filter section
-  const usageFilterSection = document.createElement('div');
-  usageFilterSection.className = 'filter-section';
-  usageFilterSection.innerHTML = '<h3>Usage Status</h3>';
-  
-  usageFilterOptions.forEach(option => {
-    const filterItem = document.createElement('div');
-    filterItem.className = 'filter-item';
-    
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = option.id;
-    checkbox.className = 'usage-filter';
-    checkbox.checked = option.checked;
-    checkbox.addEventListener('change', applyFilters);
-    
-    const label = document.createElement('label');
-    label.htmlFor = option.id;
-    label.textContent = option.label;
-    
-    filterItem.appendChild(checkbox);
-    filterItem.appendChild(label);
-    usageFilterSection.appendChild(filterItem);
-  });
-  
-  filterContainer.appendChild(usageFilterSection);
-  
-  // Add library filter section
-  const libraryFilterSection = document.createElement('div');
-  libraryFilterSection.className = 'filter-section';
-  libraryFilterSection.innerHTML = '<h3>Code Origin</h3>';
-  
-  libraryFilterOptions.forEach(option => {
-    const filterItem = document.createElement('div');
-    filterItem.className = 'filter-item';
-    
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = option.id;
-    checkbox.className = 'library-filter';
-    checkbox.checked = option.checked;
-    checkbox.addEventListener('change', applyFilters);
-    
-    const label = document.createElement('label');
-    label.htmlFor = option.id;
-    label.textContent = option.label;
-    
-    filterItem.appendChild(checkbox);
-    filterItem.appendChild(label);
-    libraryFilterSection.appendChild(filterItem);
-  });
-  
-  filterContainer.appendChild(libraryFilterSection);
   
   // Initialize the visualization
   init();
