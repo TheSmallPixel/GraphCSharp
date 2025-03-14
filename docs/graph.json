@@ -103,6 +103,12 @@
       "used": true
     },
     {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "group": "method",
+      "label": "VisitIdentifierName",
+      "used": true
+    },
+    {
       "id": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression",
       "group": "method",
       "label": "VisitInitializerExpression",
@@ -112,6 +118,18 @@
       "id": "CodeAnalysisTool.CodeGraphWalker.VisitObjectCreationExpression",
       "group": "method",
       "label": "VisitObjectCreationExpression",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "group": "method",
+      "label": "GetGraph",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
+      "group": "method",
+      "label": "NodeExists",
       "used": true
     },
     {
@@ -130,18 +148,6 @@
       "id": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
       "group": "method",
       "label": "BuildFullPropertyName",
-      "used": true
-    },
-    {
-      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "group": "method",
-      "label": "GetGraph",
-      "used": true
-    },
-    {
-      "id": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
-      "group": "method",
-      "label": "NodeExists",
       "used": true
     },
     {
@@ -250,6 +256,564 @@
       "id": "CodeAnalysisTool.UnusedElementsTest.UsedProperty",
       "group": "property",
       "label": "UsedProperty",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._currentNamespace",
+      "group": "variable",
+      "label": "_currentNamespace",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._currentClass",
+      "group": "variable",
+      "label": "_currentClass",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._currentMethod",
+      "group": "variable",
+      "label": "_currentMethod",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._namespaceNames",
+      "group": "variable",
+      "label": "_namespaceNames",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._classNames",
+      "group": "variable",
+      "label": "_classNames",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._methodFullNames",
+      "group": "variable",
+      "label": "_methodFullNames",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._propertyFullNames",
+      "group": "variable",
+      "label": "_propertyFullNames",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._variableFullNames",
+      "group": "variable",
+      "label": "_variableFullNames",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._usedClasses",
+      "group": "variable",
+      "label": "_usedClasses",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._usedMethods",
+      "group": "variable",
+      "label": "_usedMethods",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._usedProperties",
+      "group": "variable",
+      "label": "_usedProperties",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._usedVariables",
+      "group": "variable",
+      "label": "_usedVariables",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._methodCallMap",
+      "group": "variable",
+      "label": "_methodCallMap",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._methodPropertyMap",
+      "group": "variable",
+      "label": "_methodPropertyMap",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker._variableTypeMap",
+      "group": "variable",
+      "label": "_variableTypeMap",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration.namespaceName",
+      "group": "variable",
+      "label": "namespaceName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.className",
+      "group": "variable",
+      "label": "className",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.fullClassName",
+      "group": "variable",
+      "label": "fullClassName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.typeInfo",
+      "group": "variable",
+      "label": "typeInfo",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.baseClassName",
+      "group": "variable",
+      "label": "baseClassName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.prevClass",
+      "group": "variable",
+      "label": "prevClass",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration.methodName",
+      "group": "variable",
+      "label": "methodName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration.fullMethodName",
+      "group": "variable",
+      "label": "fullMethodName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration.isOverride",
+      "group": "variable",
+      "label": "isOverride",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration.prevMethod",
+      "group": "variable",
+      "label": "prevMethod",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.propertyName",
+      "group": "variable",
+      "label": "propertyName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.fullPropertyName",
+      "group": "variable",
+      "label": "fullPropertyName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.isOverride",
+      "group": "variable",
+      "label": "isOverride",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.typeSymbol",
+      "group": "variable",
+      "label": "typeSymbol",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.typeFullName",
+      "group": "variable",
+      "label": "typeFullName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement.variableName",
+      "group": "variable",
+      "label": "variableName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement.fullVariableName",
+      "group": "variable",
+      "label": "fullVariableName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement.typeSymbol",
+      "group": "variable",
+      "label": "typeSymbol",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement.typeFullName",
+      "group": "variable",
+      "label": "typeFullName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration.typeSymbol",
+      "group": "variable",
+      "label": "typeSymbol",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration.typeFullName",
+      "group": "variable",
+      "label": "typeFullName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration.variableName",
+      "group": "variable",
+      "label": "variableName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration.fullVariableName",
+      "group": "variable",
+      "label": "fullVariableName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.methodSymbol",
+      "group": "variable",
+      "label": "methodSymbol",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.callerName",
+      "group": "variable",
+      "label": "callerName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.calleeName",
+      "group": "variable",
+      "label": "calleeName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.methodName",
+      "group": "variable",
+      "label": "methodName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.fullMethodName",
+      "group": "variable",
+      "label": "fullMethodName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.symbolInfo",
+      "group": "variable",
+      "label": "symbolInfo",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.propertyName",
+      "group": "variable",
+      "label": "propertyName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.idx",
+      "group": "variable",
+      "label": "idx",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.className",
+      "group": "variable",
+      "label": "className",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.potentialProperty",
+      "group": "variable",
+      "label": "potentialProperty",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName.identifierName",
+      "group": "variable",
+      "label": "identifierName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName.fullVariableName",
+      "group": "variable",
+      "label": "fullVariableName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName.fieldName",
+      "group": "variable",
+      "label": "fieldName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression.typeInfo",
+      "group": "variable",
+      "label": "typeInfo",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression.className",
+      "group": "variable",
+      "label": "className",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression.propertyName",
+      "group": "variable",
+      "label": "propertyName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression.fullPropertyName",
+      "group": "variable",
+      "label": "fullPropertyName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitObjectCreationExpression.typeInfo",
+      "group": "variable",
+      "label": "typeInfo",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.VisitObjectCreationExpression.fullTypeName",
+      "group": "variable",
+      "label": "fullTypeName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.graph",
+      "group": "variable",
+      "label": "graph",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.externalNodes",
+      "group": "variable",
+      "label": "externalNodes",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.idx",
+      "group": "variable",
+      "label": "idx",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.className",
+      "group": "variable",
+      "label": "className",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.group",
+      "group": "variable",
+      "label": "group",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.lastPart",
+      "group": "variable",
+      "label": "lastPart",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.namespaceName",
+      "group": "variable",
+      "label": "namespaceName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.lastDot",
+      "group": "variable",
+      "label": "lastDot",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.container",
+      "group": "variable",
+      "label": "container",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.callerMethod",
+      "group": "variable",
+      "label": "callerMethod",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.isExternal",
+      "group": "variable",
+      "label": "isExternal",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.caller",
+      "group": "variable",
+      "label": "caller",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.GetGraph.linkType",
+      "group": "variable",
+      "label": "linkType",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName.typeName",
+      "group": "variable",
+      "label": "typeName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName.typeName",
+      "group": "variable",
+      "label": "typeName",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.UnusedElementsTest.UsedMethod.x",
+      "group": "variable",
+      "label": "x",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.sourcePath",
+      "group": "variable",
+      "label": "sourcePath",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.docsPath",
+      "group": "variable",
+      "label": "docsPath",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.csFiles",
+      "group": "variable",
+      "label": "csFiles",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.syntaxTrees",
+      "group": "variable",
+      "label": "syntaxTrees",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.tree",
+      "group": "variable",
+      "label": "tree",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.diagnostics",
+      "group": "variable",
+      "label": "diagnostics",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.references",
+      "group": "variable",
+      "label": "references",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.compilation",
+      "group": "variable",
+      "label": "compilation",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.walker",
+      "group": "variable",
+      "label": "walker",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.model",
+      "group": "variable",
+      "label": "model",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.graph",
+      "group": "variable",
+      "label": "graph",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.outputFile",
+      "group": "variable",
+      "label": "outputFile",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.Main.settings",
+      "group": "variable",
+      "label": "settings",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.GetMetadataReferences.references",
+      "group": "variable",
+      "label": "references",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.GetMetadataReferences.assemblyPath",
+      "group": "variable",
+      "label": "assemblyPath",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.GetMetadataReferences.commonAssemblies",
+      "group": "variable",
+      "label": "commonAssemblies",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.GetMetadataReferences.fullPath",
+      "group": "variable",
+      "label": "fullPath",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.GetMetadataReferences.entryAssembly",
+      "group": "variable",
+      "label": "entryAssembly",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.GetMetadataReferences.referencedAssemblies",
+      "group": "variable",
+      "label": "referencedAssemblies",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.Program.GetMetadataReferences.refAssembly",
+      "group": "variable",
+      "label": "refAssembly",
       "used": true
     },
     {
@@ -382,6 +946,12 @@
       "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitMemberAccessExpression",
       "group": "external-property",
       "label": "VisitMemberAccessExpression",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitIdentifierName",
+      "group": "external-property",
+      "label": "VisitIdentifierName",
       "used": true
     },
     {
@@ -763,6 +1333,18 @@
       "used": true
     },
     {
+      "id": "System.Collections.Generic.KeyValuePair.Value",
+      "group": "external-property",
+      "label": "Value",
+      "used": true
+    },
+    {
+      "id": "System.Collections.Generic.KeyValuePair.Key",
+      "group": "external-property",
+      "label": "Key",
+      "used": true
+    },
+    {
       "id": "Microsoft.CodeAnalysis.ISymbol.ContainingNamespace",
       "group": "external-property",
       "label": "ContainingNamespace",
@@ -778,18 +1360,6 @@
       "id": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
       "group": "external-property",
       "label": "ContainingType",
-      "used": true
-    },
-    {
-      "id": "System.Collections.Generic.KeyValuePair.Value",
-      "group": "external-property",
-      "label": "Value",
-      "used": true
-    },
-    {
-      "id": "System.Collections.Generic.KeyValuePair.Key",
-      "group": "external-property",
-      "label": "Key",
       "used": true
     },
     {
@@ -918,12 +1488,27 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
       "target": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression",
       "type": "containment"
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker",
       "target": "CodeAnalysisTool.CodeGraphWalker.VisitObjectCreationExpression",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
       "type": "containment"
     },
     {
@@ -939,16 +1524,6 @@
     {
       "source": "CodeAnalysisTool.CodeGraphWalker",
       "target": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
-      "type": "containment"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker",
-      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "type": "containment"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker",
-      "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
       "type": "containment"
     },
     {
@@ -1039,6 +1614,471 @@
     {
       "source": "CodeAnalysisTool.UnusedElementsTest",
       "target": "CodeAnalysisTool.UnusedElementsTest.UsedProperty",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._currentNamespace",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._currentClass",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._currentMethod",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._namespaceNames",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._classNames",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._methodFullNames",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._propertyFullNames",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._variableFullNames",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._usedClasses",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._usedMethods",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._usedProperties",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._usedVariables",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._methodCallMap",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._methodPropertyMap",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker._variableTypeMap",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitNamespaceDeclaration.namespaceName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.className",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.fullClassName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.typeInfo",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.baseClassName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration.prevClass",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration.methodName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration.fullMethodName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration.isOverride",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMethodDeclaration.prevMethod",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.propertyName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.fullPropertyName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.isOverride",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.typeSymbol",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration.typeFullName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement.variableName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement.fullVariableName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement.typeSymbol",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement.typeFullName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration.typeSymbol",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration.typeFullName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration.variableName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration.fullVariableName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.methodSymbol",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.callerName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.calleeName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.methodName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInvocationExpression.fullMethodName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.symbolInfo",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.propertyName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.idx",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.className",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitMemberAccessExpression.potentialProperty",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName.identifierName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName.fullVariableName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName.fieldName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression.typeInfo",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression.className",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression.propertyName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression.fullPropertyName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitObjectCreationExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitObjectCreationExpression.typeInfo",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitObjectCreationExpression",
+      "target": "CodeAnalysisTool.CodeGraphWalker.VisitObjectCreationExpression.fullTypeName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.graph",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.externalNodes",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.idx",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.className",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.group",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.lastPart",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.namespaceName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.lastDot",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.container",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.callerMethod",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.isExternal",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.caller",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph.linkType",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
+      "target": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName.typeName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
+      "target": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName.typeName",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.UnusedElementsTest.UsedMethod",
+      "target": "CodeAnalysisTool.UnusedElementsTest.UsedMethod.x",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.sourcePath",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.docsPath",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.csFiles",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.syntaxTrees",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.tree",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.diagnostics",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.references",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.compilation",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.walker",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.model",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.graph",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.outputFile",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.Main",
+      "target": "CodeAnalysisTool.Program.Main.settings",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.GetMetadataReferences",
+      "target": "CodeAnalysisTool.Program.GetMetadataReferences.references",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.GetMetadataReferences",
+      "target": "CodeAnalysisTool.Program.GetMetadataReferences.assemblyPath",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.GetMetadataReferences",
+      "target": "CodeAnalysisTool.Program.GetMetadataReferences.commonAssemblies",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.GetMetadataReferences",
+      "target": "CodeAnalysisTool.Program.GetMetadataReferences.fullPath",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.GetMetadataReferences",
+      "target": "CodeAnalysisTool.Program.GetMetadataReferences.entryAssembly",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.GetMetadataReferences",
+      "target": "CodeAnalysisTool.Program.GetMetadataReferences.referencedAssemblies",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.Program.GetMetadataReferences",
+      "target": "CodeAnalysisTool.Program.GetMetadataReferences.refAssembly",
       "type": "containment"
     },
     {
@@ -1322,6 +2362,21 @@
       "type": "external"
     },
     {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "Microsoft.CodeAnalysis.SyntaxToken.Text",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax.Identifier",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "node.Identifier",
+      "type": "external"
+    },
+    {
       "source": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression",
       "target": "Microsoft.CodeAnalysis.SyntaxNode.Parent",
       "type": "external"
@@ -1382,76 +2437,6 @@
       "type": "external"
     },
     {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingNamespace",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingNamespace",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingNamespace",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
-      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
-      "type": "external"
-    },
-    {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "System.Collections.Generic.KeyValuePair.Value",
       "type": "external"
@@ -1499,6 +2484,21 @@
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "CodeAnalysisTool.D3Graph.Nodes",
+      "type": "reference"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.D3Graph.Nodes",
+      "type": "reference"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.D3Graph.Links",
+      "type": "reference"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.D3Graph.Links",
       "type": "reference"
     },
     {
@@ -1555,6 +2555,76 @@
       "source": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
       "target": "CodeAnalysisTool.D3Node.Id",
       "type": "reference"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingNamespace",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingNamespace",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingNamespace",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
+      "target": "Microsoft.CodeAnalysis.ISymbol.Name",
+      "type": "external"
     },
     {
       "source": "CodeAnalysisTool.UnusedElementsTest.UsedMethod",
@@ -1878,6 +2948,11 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration",
+      "target": "System.Collections.Generic.Dictionary.ContainsKey",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitPropertyDeclaration",
       "target": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitPropertyDeclaration",
       "type": "external"
     },
@@ -1889,6 +2964,11 @@
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement",
       "target": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitLocalDeclarationStatement",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitLocalDeclarationStatement",
+      "target": "System.Collections.Generic.HashSet.Add",
       "type": "external"
     },
     {
@@ -1939,6 +3019,11 @@
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration",
       "target": "System.Collections.Generic.HashSet.Contains",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitFieldDeclaration",
+      "target": "System.Collections.Generic.HashSet.Add",
       "type": "external"
     },
     {
@@ -2097,6 +3182,41 @@
       "type": "external"
     },
     {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "System.String.IsNullOrEmpty",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "System.Collections.Generic.HashSet.Contains",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "System.Collections.Generic.HashSet.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "System.String.IsNullOrEmpty",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "System.Collections.Generic.HashSet.Contains",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "System.Collections.Generic.HashSet.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitIdentifierName",
+      "target": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitIdentifierName",
+      "type": "external"
+    },
+    {
       "source": "CodeAnalysisTool.CodeGraphWalker.VisitInitializerExpression",
       "target": "Microsoft.CodeAnalysis.CSharp.CSharpExtensions.GetTypeInfo",
       "type": "external"
@@ -2162,21 +3282,6 @@
       "type": "external"
     },
     {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
-      "target": "System.String.IsNullOrEmpty",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
-      "target": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
-      "type": "call"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
-      "target": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
-      "type": "call"
-    },
-    {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "System.Collections.Generic.HashSet.Contains",
       "type": "external"
@@ -2354,6 +3459,26 @@
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "System.Collections.Generic.List.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.List.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Linq.Enumerable.Last",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.String.Split",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Contains",
       "type": "external"
     },
     {
@@ -2453,17 +3578,7 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "target": "System.String.LastIndexOf",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "target": "System.String.Substring",
-      "type": "external"
-    },
-    {
-      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "target": "System.Collections.Generic.HashSet.Contains",
+      "target": "System.String.Split",
       "type": "external"
     },
     {
@@ -2513,13 +3628,23 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
-      "type": "call"
+      "target": "System.String.LastIndexOf",
+      "type": "external"
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
-      "type": "call"
+      "target": "System.String.Substring",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Contains",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.List.Add",
+      "type": "external"
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
@@ -2540,6 +3665,16 @@
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
       "type": "call"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Contains",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.List.Add",
+      "type": "external"
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
@@ -2555,6 +3690,21 @@
       "source": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
       "target": "System.Linq.Enumerable.Any",
       "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
+      "target": "System.String.IsNullOrEmpty",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullMethodName",
+      "target": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
+      "type": "call"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.BuildFullPropertyName",
+      "target": "CodeAnalysisTool.CodeGraphWalker.BuildFullTypeName",
+      "type": "call"
     },
     {
       "source": "CodeAnalysisTool.UnusedElementsTest.UnusedMethod",
