@@ -27,15 +27,18 @@ namespace CodeAnalysisTool
         private readonly HashSet<string> _classNames = new HashSet<string>();
         private readonly HashSet<string> _methodFullNames = new HashSet<string>();
         private readonly HashSet<string> _propertyFullNames = new HashSet<string>();
+        private readonly HashSet<string> _variableFullNames = new HashSet<string>();
 
         // Track used/unused elements
         private readonly HashSet<string> _usedClasses = new HashSet<string>();
         private readonly HashSet<string> _usedMethods = new HashSet<string>();
         private readonly HashSet<string> _usedProperties = new HashSet<string>();
+        private readonly HashSet<string> _usedVariables = new HashSet<string>();
 
         // Track method calls and property access
         private readonly Dictionary<string, List<string>> _methodCallMap = new Dictionary<string, List<string>>();
         private readonly Dictionary<string, List<string>> _methodPropertyMap = new Dictionary<string, List<string>>();
+        private readonly Dictionary<string, string> _variableTypeMap = new Dictionary<string, string>();
 
         // Override to use custom parameters
         public CodeGraphWalker() : base(SyntaxWalkerDepth.Node)
@@ -214,10 +217,10 @@ namespace CodeAnalysisTool
                 }
 
                 // Record property->type
-                //if (!_propertyTypeMap.ContainsKey(fullPropertyName))
-                //{
-                //    _propertyTypeMap[fullPropertyName] = typeFullName;
-                //}
+                if (!_variableTypeMap.ContainsKey(fullPropertyName))
+                {
+                    _variableTypeMap[fullPropertyName] = typeFullName;
+                }
             }
             
             base.VisitPropertyDeclaration(node);
@@ -236,7 +239,7 @@ namespace CodeAnalysisTool
             {
                 string variableName = variable.Identifier.Text;
                 string fullVariableName = $"{_currentMethod}.{variableName}";
-                //_variableFullNames.Add(fullVariableName);
+                _variableFullNames.Add(fullVariableName);
 
                 // Get type information
                 var typeSymbol = SemanticModel.GetTypeInfo(node.Declaration.Type).Type;
@@ -250,7 +253,7 @@ namespace CodeAnalysisTool
                         _usedClasses.Add(typeFullName);
                     }
                     
-                    //_variableTypeMap[fullVariableName] = typeFullName;
+                    _variableTypeMap[fullVariableName] = typeFullName;
                 }
             }
 
@@ -282,8 +285,8 @@ namespace CodeAnalysisTool
                 {
                     string variableName = variable.Identifier.Text;
                     string fullVariableName = $"{_currentClass}.{variableName}";
-                    //_variableFullNames.Add(fullVariableName);
-                    //_variableTypeMap[fullVariableName] = typeFullName;
+                    _variableFullNames.Add(fullVariableName);
+                    _variableTypeMap[fullVariableName] = typeFullName;
                 }
             }
 
@@ -407,6 +410,37 @@ namespace CodeAnalysisTool
         }
 
         /// <summary>
+        /// Visit identifier name expressions (e.g. variable references)
+        /// </summary>
+        public override void VisitIdentifierName(IdentifierNameSyntax node)
+        {
+            // Only track identifiers within a method context
+            if (SemanticModel != null && !string.IsNullOrEmpty(_currentMethod))
+            {
+                string identifierName = node.Identifier.Text;
+                string fullVariableName = $"{_currentMethod}.{identifierName}";
+                
+                // If this is a variable we're tracking, mark it as used
+                if (_variableFullNames.Contains(fullVariableName))
+                {
+                    _usedVariables.Add(fullVariableName);
+                }
+                
+                // Also check if it might be a class field
+                if (!string.IsNullOrEmpty(_currentClass))
+                {
+                    string fieldName = $"{_currentClass}.{identifierName}";
+                    if (_variableFullNames.Contains(fieldName))
+                    {
+                        _usedVariables.Add(fieldName);
+                    }
+                }
+            }
+            
+            base.VisitIdentifierName(node);
+        }
+
+        /// <summary>
         /// Improves property access tracking by processing object initializers
         /// </summary>
         public override void VisitInitializerExpression(InitializerExpressionSyntax node)
@@ -472,48 +506,6 @@ namespace CodeAnalysisTool
             }
             
             base.VisitObjectCreationExpression(node);
-        }
-
-        // Helpers for building full names from symbols
-        private string BuildFullTypeName(ITypeSymbol typeSymbol)
-        {
-            if (typeSymbol == null)
-                return "Unknown";
-
-            if (typeSymbol.ContainingNamespace != null && !string.IsNullOrEmpty(typeSymbol.ContainingNamespace.Name))
-            {
-                return $"{typeSymbol.ContainingNamespace}.{typeSymbol.Name}";
-            }
-
-            return typeSymbol.Name;
-        }
-
-        private string BuildFullMethodName(IMethodSymbol methodSymbol)
-        {
-            if (methodSymbol == null)
-                return "Unknown";
-
-            if (methodSymbol.ContainingType != null)
-            {
-                string typeName = BuildFullTypeName(methodSymbol.ContainingType);
-                return $"{typeName}.{methodSymbol.Name}";
-            }
-
-            return methodSymbol.Name;
-        }
-
-        private string BuildFullPropertyName(IPropertySymbol propertySymbol)
-        {
-            if (propertySymbol == null)
-                return "Unknown";
-
-            if (propertySymbol.ContainingType != null)
-            {
-                string typeName = BuildFullTypeName(propertySymbol.ContainingType);
-                return $"{typeName}.{propertySymbol.Name}";
-            }
-
-            return propertySymbol.Name;
         }
 
         /// <summary>
@@ -710,6 +702,18 @@ namespace CodeAnalysisTool
                 });
             }
             
+            // Add variable nodes
+            foreach (var variable in _variableFullNames)
+            {
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = variable,
+                    Group = "variable",
+                    Label = variable.Split('.').Last(),
+                    Used = _usedVariables.Contains(variable)
+                });
+            }
+            
             // Add external nodes for references that would be dangling otherwise
             foreach (var externalNode in externalNodes)
             {
@@ -739,36 +743,29 @@ namespace CodeAnalysisTool
 
             // 4) Links:
             // (a) namespace -> class
-            foreach (var cls in _classNames)
+            foreach (var className in _classNames)
             {
-                int idx = cls.LastIndexOf('.');
-                if (idx > 0)
+                var namespaceName = className.Split('.')[0];
+                graph.Links.Add(new D3Link
                 {
-                    var ns = cls.Substring(0, idx);
-                    if (_namespaceNames.Contains(ns))
-                    {
-                        graph.Links.Add(new D3Link
-                        {
-                            Source = ns,
-                            Target = cls,
-                            Type = "containment"
-                        });
-                    }
-                }
+                    Source = namespaceName,
+                    Target = className,
+                    Type = "containment"
+                });
             }
-
+            
             // (b) class -> method
             foreach (var method in _methodFullNames)
             {
-                int idx = method.LastIndexOf('.');
-                if (idx > 0)
+                int lastDot = method.LastIndexOf('.');
+                if (lastDot > 0)
                 {
-                    var cls = method.Substring(0, idx);
-                    if (_classNames.Contains(cls))
+                    string className = method.Substring(0, lastDot);
+                    if (_classNames.Contains(className))
                     {
                         graph.Links.Add(new D3Link
                         {
-                            Source = cls,
+                            Source = className,
                             Target = method,
                             Type = "containment"
                         });
@@ -776,27 +773,58 @@ namespace CodeAnalysisTool
                 }
             }
             
-            // (c) class->property
-            foreach (var prop in _propertyFullNames)
+            // (c) class -> property
+            foreach (var property in _propertyFullNames)
             {
-                int idx = prop.LastIndexOf('.');
-                if (idx > 0)
+                int lastDot = property.LastIndexOf('.');
+                if (lastDot > 0)
                 {
-                    var cls = prop.Substring(0, idx);
-                    // If that class is in _classNames, link them
-                    if (_classNames.Contains(cls))
+                    string className = property.Substring(0, lastDot);
+                    if (_classNames.Contains(className))
                     {
                         graph.Links.Add(new D3Link
                         {
-                            Source = cls,
-                            Target = prop,
+                            Source = className,
+                            Target = property,
                             Type = "containment"
                         });
                     }
                 }
             }
             
-            // (d) method->property usage
+            // (d) method -> variable (variables belong to methods)
+            foreach (var variable in _variableFullNames)
+            {
+                int lastDot = variable.LastIndexOf('.');
+                if (lastDot > 0)
+                {
+                    string container = variable.Substring(0, lastDot);
+                    
+                    // Check if this is a method variable or class field
+                    if (_methodFullNames.Contains(container))
+                    {
+                        // Method variable
+                        graph.Links.Add(new D3Link
+                        {
+                            Source = container,
+                            Target = variable,
+                            Type = "containment"
+                        });
+                    }
+                    else if (_classNames.Contains(container))
+                    {
+                        // Class field
+                        graph.Links.Add(new D3Link
+                        {
+                            Source = container,
+                            Target = variable,
+                            Type = "containment"
+                        });
+                    }
+                }
+            }
+            
+            // (e) method -> property usage 
             foreach (var kvp in _methodPropertyMap)
             {
                 var callerMethod = kvp.Key; // e.g. "MyApp.Core.Foo.Bar"
@@ -817,26 +845,19 @@ namespace CodeAnalysisTool
                     }
                 }
             }
-
-            // (e) method -> method (method calls)
+            
+            // (f) method calls
             foreach (var kvp in _methodCallMap)
             {
-                var caller = kvp.Key;
+                string caller = kvp.Key;
                 foreach (var callee in kvp.Value)
                 {
-                    // Make sure both ends of the link exist
-                    if (NodeExists(graph, caller) && NodeExists(graph, callee))
+                    // Skip self-calls (they clutter the graph)
+                    if (caller != callee)
                     {
-                        // default to internal call
-                        var linkType = "call";
-
-                        // Check if this is an external call (a method outside our codebase)
-                        bool isExternal = !_methodFullNames.Contains(callee);
-                        if (isExternal)
-                        {
-                            linkType = "external";
-                        }
-
+                        // External calls get a different edge type
+                        string linkType = _methodFullNames.Contains(callee) ? "call" : "external";
+                        
                         graph.Links.Add(new D3Link
                         {
                             Source = caller,
@@ -856,6 +877,48 @@ namespace CodeAnalysisTool
         private bool NodeExists(D3Graph graph, string nodeId)
         {
             return graph.Nodes.Any(n => n.Id == nodeId);
+        }
+
+        // Helpers for building full names from symbols
+        private string BuildFullTypeName(ITypeSymbol typeSymbol)
+        {
+            if (typeSymbol == null)
+                return "Unknown";
+
+            if (typeSymbol.ContainingNamespace != null && !string.IsNullOrEmpty(typeSymbol.ContainingNamespace.Name))
+            {
+                return $"{typeSymbol.ContainingNamespace}.{typeSymbol.Name}";
+            }
+
+            return typeSymbol.Name;
+        }
+
+        private string BuildFullMethodName(IMethodSymbol methodSymbol)
+        {
+            if (methodSymbol == null)
+                return "Unknown";
+
+            if (methodSymbol.ContainingType != null)
+            {
+                string typeName = BuildFullTypeName(methodSymbol.ContainingType);
+                return $"{typeName}.{methodSymbol.Name}";
+            }
+
+            return methodSymbol.Name;
+        }
+
+        private string BuildFullPropertyName(IPropertySymbol propertySymbol)
+        {
+            if (propertySymbol == null)
+                return "Unknown";
+
+            if (propertySymbol.ContainingType != null)
+            {
+                string typeName = BuildFullTypeName(propertySymbol.ContainingType);
+                return $"{typeName}.{propertySymbol.Name}";
+            }
+
+            return propertySymbol.Name;
         }
     }
 
