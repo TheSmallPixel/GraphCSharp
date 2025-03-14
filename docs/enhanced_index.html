@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8"/>
   <title>C# Code Graph Visualization</title>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="enhanced_styles.css">
 </head>
@@ -238,6 +237,15 @@
     <div id="node-link-counter">Nodes: 0 | Links: 0</div>
   </div>
 
+  <!-- Load D3.js library -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  
+  <!-- Load visualization modules -->
   <script src="visualizer-main.js"></script>
+  <script src="visualizer-styles.js"></script>
+  <script src="visualizer-ui.js"></script>
+  <script src="visualizer-filters.js"></script>
+  <script src="visualizer-core.js"></script>
+  
 </body>
 </html>
