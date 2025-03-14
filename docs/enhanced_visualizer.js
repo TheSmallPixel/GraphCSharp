@@ -741,17 +741,11 @@ document.addEventListener('DOMContentLoaded', function() {
       // If no namespace filters are selected, show all nodes
       if (namespaceFilters.length === 0) return true;
       
-      // For namespace nodes, check direct match
-      const node = graph.nodes.find(n => n.id === nodeId);
-      if (node && node.group === 'namespace') {
-        return namespaceFilters.some(ns => ns === nodeId);
-      }
+      // Get the first level of the namespace from the nodeId
+      const firstLevelNamespace = nodeId.split('.')[0];
       
-      // For other nodes, check if they belong to any of the filtered namespaces
-      return namespaceFilters.some(namespace => {
-        // Check if the node ID starts with the namespace followed by a dot
-        return nodeId === namespace || nodeId.startsWith(namespace + '.');
-      });
+      // Check if this first level namespace is in the list of filtered namespaces
+      return namespaceFilters.includes(firstLevelNamespace);
     };
     
     // Apply node filters
@@ -1154,40 +1148,34 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    // Extract all namespaces from the graph
+    // Extract first-level namespaces from the graph
     const namespaces = new Set();
     
-    // Extract namespace from node IDs
+    // Process each node to extract just the first level of namespaces
     graph.nodes.forEach(node => {
+      let firstLevelNamespace = null;
+      
       if (node.group === 'namespace') {
-        namespaces.add(node.id);
+        // For namespace nodes, get only the first part
+        firstLevelNamespace = node.id.split('.')[0];
       } else {
-        // For non-namespace nodes, extract the namespace part
+        // For other nodes, extract the first part of the namespace
         const parts = node.id.split('.');
         if (parts.length > 1) {
-          // Find the namespace by looking at the first part(s) of the ID
-          // We consider everything before the last part as potentially part of the namespace
-          const potentialNamespace = parts.slice(0, -1).join('.');
-          
-          // Check if this potential namespace exists as a node
-          const namespaceNode = graph.nodes.find(n => 
-            n.group === 'namespace' && (n.id === potentialNamespace || potentialNamespace.startsWith(n.id + '.'))
-          );
-          
-          if (namespaceNode) {
-            namespaces.add(namespaceNode.id);
-          } else if (potentialNamespace) {
-            // Add the potential namespace even if it's not explicitly defined as a node
-            namespaces.add(potentialNamespace);
-          }
+          firstLevelNamespace = parts[0];
         }
+      }
+      
+      // Add to set if valid
+      if (firstLevelNamespace) {
+        namespaces.add(firstLevelNamespace);
       }
     });
     
     // Sort namespaces alphabetically
     const sortedNamespaces = Array.from(namespaces).sort();
     
-    console.log("Found namespaces:", sortedNamespaces);
+    console.log("Found first-level namespaces:", sortedNamespaces);
     
     // Generate namespace filter checkboxes
     const namespaceFiltersContainer = document.getElementById('namespace-filters');
@@ -1233,12 +1221,8 @@ document.addEventListener('DOMContentLoaded', function() {
         checkbox.checked = true;
         checkbox.setAttribute('data-namespace', namespace);
         
-        // Extract the last part of the namespace for display
-        const displayName = namespace.split('.').pop();
-        
         const text = document.createElement('span');
-        text.textContent = displayName;
-        text.title = namespace; // Show full namespace on hover
+        text.textContent = namespace;
         
         label.appendChild(checkbox);
         label.appendChild(text);
@@ -1246,7 +1230,7 @@ document.addEventListener('DOMContentLoaded', function() {
         namespaceFiltersContainer.appendChild(div);
       });
       
-      console.log("Namespace filters initialized with", sortedNamespaces.length, "namespaces");
+      console.log("Namespace filters initialized with", sortedNamespaces.length, "first-level namespaces");
       
       // Set up event listeners for namespace filters
       document.querySelectorAll('.namespace-filter').forEach(filter => {
