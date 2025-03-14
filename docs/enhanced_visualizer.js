@@ -1218,8 +1218,12 @@ document.addEventListener('DOMContentLoaded', function() {
         checkbox.checked = true;
         checkbox.setAttribute('data-namespace', namespace);
         
+        // Create a more readable display name with proper capitalization
+        const displayName = namespace.charAt(0).toUpperCase() + namespace.slice(1);
+        
         const text = document.createElement('span');
-        text.textContent = namespace;
+        text.textContent = displayName;
+        text.title = `Filter by ${namespace} namespace`; // Add tooltip
         
         label.appendChild(checkbox);
         label.appendChild(text);
@@ -1271,6 +1275,64 @@ document.addEventListener('DOMContentLoaded', function() {
         selectAllCheckbox.indeterminate = true;
       }
     }
+  }
+  
+  // Add CSS styles for proper visualization
+  function addStyles() {
+    const styleElement = document.createElement('style');
+    
+    styleElement.textContent = `
+      /* Namespace filter styles */
+      #namespace-filters {
+        max-height: 200px;
+        overflow-y: auto;
+        margin-bottom: 5px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        padding: 5px;
+      }
+      
+      .filter-description {
+        font-size: 0.8em;
+        color: #666;
+        margin-bottom: 15px;
+        font-style: italic;
+      }
+      
+      .loading-placeholder {
+        font-style: italic;
+        color: #999;
+        text-align: center;
+        padding: 10px;
+      }
+      
+      .filter-item {
+        margin: 5px 0;
+      }
+      
+      .filter-item label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+      }
+      
+      .filter-item label:hover {
+        background-color: #f8f8f8;
+      }
+      
+      .filter-item input[type="checkbox"] {
+        margin-right: 8px;
+      }
+      
+      .select-all {
+        font-weight: bold;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+        margin-bottom: 8px;
+      }
+    `;
+    
+    document.head.appendChild(styleElement);
   }
   
   // Initialize the visualization
