@@ -140,6 +140,28 @@ document.addEventListener('DOMContentLoaded', function() {
       type: getComputedStyle(document.documentElement).getPropertyValue('--type-color')
     };
     
+    // Create a custom boundary force
+    function forceBoundary(alpha) {
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(width, height) / 2 - 50; // Boundary radius
+
+      for (let i = 0, n = graph.nodes.length; i < n; ++i) {
+        const node = graph.nodes[i];
+        // Calculate distance from center
+        const dx = node.x - centerX;
+        const dy = node.y - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // If node is outside boundary, push it back
+        if (distance > radius) {
+          const k = (distance - radius) / distance * alpha;
+          node.x -= dx * k;
+          node.y -= dy * k;
+        }
+      }
+    }
+    
     // Initialize the force simulation
     simulation = d3.forceSimulation(graph.nodes)
       .force('link', d3.forceLink(graph.links)
@@ -158,14 +180,9 @@ document.addEventListener('DOMContentLoaded', function() {
       )
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(30));
-    
-    // Add boundary force to keep nodes within the container
-    simulation.force('boundary', d3.forceBoundary()
-      .radius([width/2, height/2])
-      .position([width/2, height/2])
-      .strength(0.1));
-    
+      .force('collision', d3.forceCollide().radius(30))
+      .force('boundary', forceBoundary); // Custom boundary force
+
     // Draw links
     const link = gContainer.selectAll('.link')
       .data(graph.links)
