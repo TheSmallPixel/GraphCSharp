@@ -30,6 +30,7 @@ namespace CodeAnalysisTool
         private readonly HashSet<string> _variableFullNames = new HashSet<string>();
 
         // Track used/unused elements
+        private readonly HashSet<string> _usedNamespaces = new HashSet<string>();
         private readonly HashSet<string> _usedClasses = new HashSet<string>();
         private readonly HashSet<string> _usedMethods = new HashSet<string>();
         private readonly HashSet<string> _usedProperties = new HashSet<string>();
@@ -627,6 +628,9 @@ namespace CodeAnalysisTool
                 Links = new List<D3Link>()
             };
             
+            // Mark namespaces as used if they contain used elements
+            MarkNamespacesWithUsedElements();
+            
             // Build namespace nodes
             foreach (var ns in _namespaceNames.Distinct())
             {
@@ -941,6 +945,23 @@ namespace CodeAnalysisTool
                 return _variableTypeMap[variableId];
             }
             return "Unknown";
+        }
+
+        private void MarkNamespacesWithUsedElements()
+        {
+            foreach (var ns in _namespaceNames)
+            {
+                foreach (var cls in _classNames)
+                {
+                    if (cls.StartsWith(ns))
+                    {
+                        if (_usedClasses.Contains(cls))
+                        {
+                            _usedNamespaces.Add(ns);
+                        }
+                    }
+                }
+            }
         }
 
         // Helpers for building full names from symbols

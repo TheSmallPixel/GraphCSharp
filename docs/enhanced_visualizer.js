@@ -78,6 +78,12 @@ document.addEventListener('DOMContentLoaded', function() {
   function processData() {
     // Initialize node usage counts
     graph.nodes.forEach(node => {
+      node.group = node.group || '';
+      node.label = node.label || '';
+      node.id = node.id || '';
+      node.used = node.used || false;
+      node.isexternal = node.isexternal || false;  // Lowercase to match JSON naming
+      
       nodeUsageCounts.set(node.id, 0);
       nodeReferences.set(node.id, { incoming: [], outgoing: [] });
     });
