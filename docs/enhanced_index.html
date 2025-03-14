@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>C# Code Graph Visualization</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-force-boundary@0.0.1/dist/d3-force-boundary.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --namespace-color: #3498db;
+      --class-color: #f39c12;
+      --method-color: #2ecc71;
+      --property-color: #e74c3c;
+      --variable-color: #9b59b6;
+      --type-color: #34495e;
+      --unused-color: #c0392b;
+      --used-color: #27ae60;
+      --sidebar-bg: #2c3e50;
+      --sidebar-text: #ecf0f1;
+      --bg-color: #f5f5f5;
+      --link-color: #7f8c8d;
+      --active-color: #16a085;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      grid-template-rows: 60px 1fr 30px;
+      grid-template-areas:
+        "header header"
+        "sidebar main"
+        "footer footer";
+      height: 100vh;
+    }
+    
+    #header {
+      grid-area: header;
+      background-color: #34495e;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    
+    #header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    
+    #search-container {
+      flex: 0 0 40%;
+    }
+    
+    #search {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 20px;
+      border: none;
+      background-color: rgba(255,255,255,0.2);
+      color: white;
+    }
+    
+    #search::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+    
+    #visualization-options {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .option-button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    #sidebar {
+      grid-area: sidebar;
+      background-color: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    
+    .sidebar-section {
+      margin-bottom: 20px;
+    }
+    
+    .sidebar-section h2 {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 5px;
+    }
+    
+    .stat-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .stat-icon {
+      flex: 0 0 30px;
+      text-align: center;
+      font-size: 1rem;
+    }
+    
+    .stat-info {
+      flex: 1;
+    }
+    
+    .stat-value {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+    
+    #filters-container .filter-group {
+      margin-bottom: 10px;
+    }
+    
+    #filters-container label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+    
+    #filters-container input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    
+    .color-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    
+    #main {
+      grid-area: main;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    #chart {
+      width: 100%;
+      height: 100%;
+    }
+    
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    .link {
+      stroke-opacity: 0.6;
+      transition: stroke-width 0.2s, stroke-opacity 0.2s;
+    }
+    
+    .node {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .node circle {
+      stroke: #fff;
+      stroke-width: 1.5px;
+      transition: r 0.2s;
+    }
+    
+    .node text {
+      font-size: 10px;
+      pointer-events: none;
+      opacity: 0.9;
+      transition: font-size 0.2s, opacity 0.2s;
+    }
+    
+    .node.highlight circle {
+      stroke: #ffd700;
+      stroke-width: 2.5px;
+    }
+    
+    .node.faded {
+      opacity: 0.3;
+    }
+    
+    .link.highlight {
+      stroke-width: 2px !important;
+      stroke-opacity: 1 !important;
+    }
+    
+    .link.faded {
+      opacity: 0.1;
+    }
+    
+    #tooltip {
+      position: absolute;
+      padding: 10px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      max-width: 300px;
+      z-index: 100;
+    }
+    
+    #tooltip h3 {
+      margin: 0 0 5px 0;
+      font-size: 1rem;
+    }
+    
+    .tooltip-property {
+      margin-bottom: 2px;
+      font-size: 0.85rem;
+    }
+    
+    .tooltip-label {
+      font-weight: bold;
+      display: inline-block;
+      width: 70px;
+    }
+    
+    #footer {
+      grid-area: footer;
+      background-color: #34495e;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      font-size: 0.8rem;
+    }
+    
+    #zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .zoom-button {
+      border: none;
+      background: none;
+      font-size: 1.2rem;
+      padding: 5px 10px;
+      cursor: pointer;
+      color: #555;
+    }
+    
+    .zoom-button:hover {
+      color: var(--active-color);
+    }
+    
+    #detail-panel {
+      position: absolute;
+      top: 70px;
+      right: 20px;
+      width: 350px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      max-height: calc(100% - 100px);
+      overflow-y: auto;
+    }
+    
+    #detail-panel.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    #detail-panel h2 {
+      margin-top: 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .close-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #777;
+    }
+    
+    .relationship-list {
+      margin-top: 10px;
+    }
+    
+    .relationship-item {
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    
+    .relationship-item:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .relationship-icon {
+      flex: 0 0 25px;
+      text-align: center;
+      margin-right: 8px;
+    }
+    
+    .unused-warning {
+      background-color: #ffecec;
+      border-left: 4px solid #e74c3c;
+      padding: 10px;
+      margin-top: 15px;
+      border-radius: 4px;
+    }
+    
+    .usage-stat {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      margin-left: 10px;
+      color: white;
+    }
+    
+    .usage-high {
+      background-color: var(--used-color);
+    }
+    
+    .usage-none {
+      background-color: var(--unused-color);
+    }
+    
+    .usage-low {
+      background-color: #f39c12;
+    }
+    
+    #legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 10px;
+      font-size: 0.8rem;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    
+    .legend-color {
+      width: 15px;
+      height: 15px;
+      border-radius: 4px;
+      margin-right: 8px;
+    }
+    
+    /* Loading overlay */
+    #loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255,255,255,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid var(--active-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <h1>C# Code Graph Visualization</h1>
+    <div id="search-container">
+      <input type="text" id="search" placeholder="Search for classes, methods, properties...">
+    </div>
+    <div id="visualization-options">
+      <button class="option-button" id="toggle-hierarchical">
+        <i class="fas fa-sitemap"></i> Hierarchical
+      </button>
+      <button class="option-button" id="toggle-force-directed">
+        <i class="fas fa-project-diagram"></i> Force-directed
+      </button>
+      <button class="option-button" id="toggle-highlight-unused">
+        <i class="fas fa-exclamation-triangle"></i> Highlight Unused
+      </button>
+    </div>
+  </div>
+  
+  <div id="sidebar">
+    <div class="sidebar-section" id="stats-container">
+      <h2>Code Statistics</h2>
+      <div class="stat-container">
+        <div class="stat-icon"><i class="fas fa-cubes" style="color: var(--namespace-color)"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="namespace-count">0</div>
+          <div class="stat-label">Namespaces</div>
+        </div>
+      </div>
+      <div class="stat-container">
+        <div class="stat-icon"><i class="fas fa-cube" style="color: var(--class-color)"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="class-count">0</div>
+          <div class="stat-label">Classes</div>
+        </div>
+      </div>
+      <div class="stat-container">
+        <div class="stat-icon"><i class="fas fa-code" style="color: var(--method-color)"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="method-count">0</div>
+          <div class="stat-label">Methods</div>
+        </div>
+      </div>
+      <div class="stat-container">
+        <div class="stat-icon"><i class="fas fa-database" style="color: var(--property-color)"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="property-count">0</div>
+          <div class="stat-label">Properties</div>
+        </div>
+      </div>
+      <div class="stat-container">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle" style="color: var(--unused-color)"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="unused-count">0</div>
+          <div class="stat-label">Unused Elements</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section" id="filters-container">
+      <h2>Filters</h2>
+      <div class="filter-group">
+        <label>
+          <input type="checkbox" class="node-filter" value="namespace" checked>
+          <span class="color-indicator" style="background-color: var(--namespace-color)"></span>
+          Namespaces
+        </label>
+        <label>
+          <input type="checkbox" class="node-filter" value="class" checked>
+          <span class="color-indicator" style="background-color: var(--class-color)"></span>
+          Classes
+        </label>
+        <label>
+          <input type="checkbox" class="node-filter" value="method" checked>
+          <span class="color-indicator" style="background-color: var(--method-color)"></span>
+          Methods
+        </label>
+        <label>
+          <input type="checkbox" class="node-filter" value="property" checked>
+          <span class="color-indicator" style="background-color: var(--property-color)"></span>
+          Properties
+        </label>
+        <label>
+          <input type="checkbox" class="node-filter" value="variable">
+          <span class="color-indicator" style="background-color: var(--variable-color)"></span>
+          Variables
+        </label>
+        <label>
+          <input type="checkbox" class="node-filter" value="type">
+          <span class="color-indicator" style="background-color: var(--type-color)"></span>
+          Types
+        </label>
+      </div>
+      
+      <div class="filter-group">
+        <h3>Link Types</h3>
+        <label>
+          <input type="checkbox" class="link-filter" value="containment" checked>
+          <span class="color-indicator" style="background-color: #999"></span>
+          Containment
+        </label>
+        <label>
+          <input type="checkbox" class="link-filter" value="call" checked>
+          <span class="color-indicator" style="background-color: #555"></span>
+          Method Calls
+        </label>
+        <label>
+          <input type="checkbox" class="link-filter" value="reference" checked>
+          <span class="color-indicator" style="background-color: blue"></span>
+          References
+        </label>
+        <label>
+          <input type="checkbox" class="link-filter" value="external" checked>
+          <span class="color-indicator" style="background-color: red"></span>
+          External
+        </label>
+      </div>
+      
+      <div class="filter-group">
+        <h3>Usage Status</h3>
+        <label>
+          <input type="checkbox" class="usage-filter" value="used" checked>
+          <span class="color-indicator" style="background-color: var(--used-color)"></span>
+          Used Elements
+        </label>
+        <label>
+          <input type="checkbox" class="usage-filter" value="unused" checked>
+          <span class="color-indicator" style="background-color: var(--unused-color)"></span>
+          Unused Elements
+        </label>
+      </div>
+    </div>
+    
+    <div class="sidebar-section" id="analysis-container">
+      <h2>Analysis</h2>
+      <div id="analysis-summary">
+        Click on a node to see detailed analysis.
+      </div>
+    </div>
+  </div>
+  
+  <div id="main">
+    <div id="chart"></div>
+    
+    <div id="tooltip">
+      <h3 id="tooltip-title">Node Name</h3>
+      <div class="tooltip-property">
+        <span class="tooltip-label">Type:</span>
+        <span id="tooltip-type">Class</span>
+      </div>
+      <div class="tooltip-property">
+        <span class="tooltip-label">Used:</span>
+        <span id="tooltip-used">Yes</span>
+      </div>
+    </div>
+    
+    <div id="zoom-controls">
+      <button class="zoom-button" id="zoom-in"><i class="fas fa-plus"></i></button>
+      <button class="zoom-button" id="zoom-reset"><i class="fas fa-home"></i></button>
+      <button class="zoom-button" id="zoom-out"><i class="fas fa-minus"></i></button>
+    </div>
+    
+    <div id="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: var(--namespace-color)"></div>
+        <div>Namespace</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: var(--class-color)"></div>
+        <div>Class</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: var(--method-color)"></div>
+        <div>Method</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: var(--property-color)"></div>
+        <div>Property</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: var(--variable-color)"></div>
+        <div>Variable</div>
+      </div>
+    </div>
+    
+    <div id="detail-panel">
+      <h2>
+        <span id="detail-title">Detail Panel</span>
+        <button class="close-button" id="close-details"><i class="fas fa-times"></i></button>
+      </h2>
+      <div id="detail-content">
+        <!-- Content will be dynamically generated -->
+      </div>
+    </div>
+    
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+    </div>
+  </div>
+  
+  <div id="footer">
+    <div>Generated with GraphCSharp</div>
+    <div id="node-link-counter">Nodes: 0 | Links: 0</div>
+  </div>
+
+  <script src="enhanced_visualizer.js"></script>
+</body>
+</html>

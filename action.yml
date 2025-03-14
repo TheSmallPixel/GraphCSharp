@@ -67,8 +67,32 @@ runs:
           echo "No index file found in user repo. Copying default_index.html..."
           mkdir -p "$(dirname "$TARGET_FILE")"
           cp "$DEFAULT_INDEX" "$TARGET_FILE"
+          
+          # Also copy enhanced visualization files if they exist in the action repo
+          ENHANCED_INDEX="$ACTION_REPO_DIR/docs/enhanced_index.html"
+          ENHANCED_JS="$ACTION_REPO_DIR/docs/enhanced_visualizer.js"
+          
+          if [ -f "$ENHANCED_INDEX" ]; then
+            echo "Copying enhanced visualization files..."
+            cp "$ENHANCED_INDEX" "${DOCS_DIR}/enhanced_index.html"
+            cp "$ENHANCED_JS" "${DOCS_DIR}/enhanced_visualizer.js"
+            echo "Enhanced visualization available at: ${DOCS_DIR}/enhanced_index.html"
+          fi
         else
           echo "Index file already exists. Not overwriting."
+          
+          # Still copy enhanced visualization if it doesn't exist
+          if [ ! -f "${DOCS_DIR}/enhanced_index.html" ]; then
+            ENHANCED_INDEX="$ACTION_REPO_DIR/docs/enhanced_index.html"
+            ENHANCED_JS="$ACTION_REPO_DIR/docs/enhanced_visualizer.js"
+            
+            if [ -f "$ENHANCED_INDEX" ]; then
+              echo "Copying enhanced visualization files..."
+              cp "$ENHANCED_INDEX" "${DOCS_DIR}/enhanced_index.html"
+              cp "$ENHANCED_JS" "${DOCS_DIR}/enhanced_visualizer.js"
+              echo "Enhanced visualization available at: ${DOCS_DIR}/enhanced_index.html"
+            fi
+          fi
         fi
       shell: bash
 
