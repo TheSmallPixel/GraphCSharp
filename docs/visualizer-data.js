@@ -21,7 +21,7 @@ async function loadGraph() {
   console.log("Loading graph data...");
   
   try {
-    const response = await fetch('graph_data.json');
+    const response = await fetch('graph.json');
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
