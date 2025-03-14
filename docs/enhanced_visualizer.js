@@ -27,6 +27,35 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       console.log('Initializing visualization...');
       
+      // Create SVG element first
+      chartContainer = document.getElementById('chart');
+      if (!chartContainer) {
+        console.error("Chart container not found");
+        return;
+      }
+      
+      // Get container dimensions
+      const width = chartContainer.clientWidth || 960;
+      const height = chartContainer.clientHeight || 600;
+      
+      // Set up zoom behavior before loading data
+      zoomBehavior = d3.zoom()
+        .scaleExtent([0.1, 8])
+        .on('zoom', (event) => {
+          gContainer.attr('transform', event.transform);
+        });
+      
+      // Create SVG with proper dimensions
+      svg = d3.select('#chart')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .call(zoomBehavior);
+      
+      // Add group for zoom transforms
+      gContainer = svg.append('g');
+      
       // Load data
       graph = await d3.json('graph.json');
       console.log(`Loaded graph data: ${graph.nodes.length} nodes, ${graph.links.length} links`);
@@ -92,24 +121,28 @@ document.addEventListener('DOMContentLoaded', function() {
   function initializeForceLayout() {
     console.log("Initializing force layout...");
     
-    // Initialize the force simulation
+    // Make sure we have SVG and container elements
+    if (!svg || !gContainer) {
+      console.error("SVG or container not properly initialized");
+      return;
+    }
+    
+    // Get width and height from SVG
+    const svgEl = svg.node();
+    const width = svgEl.clientWidth || 960;
+    const height = svgEl.clientHeight || 600;
+    
+    // Clear any existing elements
+    gContainer.selectAll('*').remove();
+    
+    // Initialize the force simulation with explicit dimensions
     simulation = d3.forceSimulation(graph.nodes)
       .force('link', d3.forceLink(graph.links)
         .id(d => d.id)
-        .distance(d => {
-          // Adjust link distance based on node types
-          if (d.type === 'containment') return 80;
-          if (d.type === 'reference') return 120;
-          return 100;
-        })
-        .strength(d => {
-          if (d.type === 'reference') return 0.2;
-          if (d.type === 'external') return 0.1;
-          return 0.5;
-        })
+        .distance(100)
       )
       .force('charge', d3.forceManyBody().strength(-300))
-      .force('center', d3.forceCenter(chartContainer.clientWidth / 2, chartContainer.clientHeight / 2))
+      .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(30));
     
     // Update simulation on tick
@@ -123,6 +156,9 @@ document.addEventListener('DOMContentLoaded', function() {
       gContainer.selectAll('.node')
         .attr('transform', d => `translate(${d.x}, ${d.y})`);
     });
+    
+    // Draw the graph
+    drawGraph();
     
     console.log("Force layout initialized");
   }
@@ -438,18 +474,44 @@ document.addEventListener('DOMContentLoaded', function() {
     return null;
   }
   
-  // Highlight connections for a selected node
+  // Focus on a specific node in the visualization
+  function focusNode(node) {
+    // Get the current transform
+    const currentTransform = d3.zoomTransform(svg.node());
+    
+    // Create a new transform centered on the node
+    const targetX = width / 2 - node.x * currentTransform.k;
+    const targetY = height / 2 - node.y * currentTransform.k;
+    
+    // Smoothly transition to the new transform
+    svg.transition()
+      .duration(750)
+      .call(
+        zoomBehavior.transform,
+        d3.zoomIdentity
+          .translate(targetX, targetY)
+          .scale(currentTransform.k)
+      );
+    
+    // Highlight the node and its connections
+    highlightNodeConnections(node.id);
+  }
+  
+  // Highlight connections for a node
   function highlightNodeConnections(nodeId) {
+    console.log("Highlighting connections for node:", nodeId);
+    
     // Reset previous highlights
     resetHighlights();
     
-    // Find all connected nodes (both incoming and outgoing)
+    // Find connected nodes
     const connectedNodeIds = new Set();
+    connectedNodeIds.add(nodeId); // Add the selected node itself
     
-    // Add the links that go to or from the selected node
-    graph.links.forEach(link => {
-      const sourceId = link.source.id || link.source;
-      const targetId = link.target.id || link.target;
+    // Identify all connected nodes through links
+    gContainer.selectAll('.link').each(function(d) {
+      const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+      const targetId = typeof d.target === 'object' ? d.target.id : d.target;
       
       if (sourceId === nodeId) {
         connectedNodeIds.add(targetId);
@@ -458,19 +520,21 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
     
-    // Fade all nodes and links
+    // Apply faded class to all nodes and links
     gContainer.selectAll('.node').classed('faded', true);
     gContainer.selectAll('.link').classed('faded', true);
     
-    // Highlight the selected node and its connections
+    // Remove faded class from the selected node and its connections
     gContainer.select(`.node[data-id="${nodeId}"]`).classed('faded', false).classed('highlighted', true);
     
     // Highlight connected nodes
     connectedNodeIds.forEach(id => {
-      gContainer.select(`.node[data-id="${id}"]`).classed('faded', false).classed('connected', true);
+      if (id !== nodeId) { // Skip the selected node (already highlighted)
+        gContainer.select(`.node[data-id="${id}"]`).classed('faded', false).classed('connected', true);
+      }
     });
     
-    // Highlight links between the selected node and its connections
+    // Highlight links connecting to the selected node
     gContainer.selectAll('.link').each(function(d) {
       const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
       const targetId = typeof d.target === 'object' ? d.target.id : d.target;
@@ -479,278 +543,14 @@ document.addEventListener('DOMContentLoaded', function() {
         d3.select(this).classed('faded', false).classed('highlighted', true);
       }
     });
+    
+    console.log("Highlighted node and connections");
   }
   
   // Reset all highlights
   function resetHighlights() {
     gContainer.selectAll('.node').classed('faded', false).classed('highlighted', false).classed('connected', false);
     gContainer.selectAll('.link').classed('faded', false).classed('highlighted', false);
-  }
-  
-  // Handle node mouse over event
-  function handleNodeMouseOver(event, d) {
-    const node = d3.select(this);
-    node.classed('highlight', true);
-    
-    // Show tooltip
-    tooltip.style.opacity = 1;
-    tooltip.style.left = (event.pageX + 10) + 'px';
-    tooltip.style.top = (event.pageY - 10) + 'px';
-    
-    document.getElementById('tooltip-title').textContent = d.label;
-    document.getElementById('tooltip-type').textContent = d.group.charAt(0).toUpperCase() + d.group.slice(1);
-    document.getElementById('tooltip-used').textContent = d.used === false ? 'No' : 'Yes';
-    
-    // Highlight connected links and nodes
-    highlightNodeConnections(d.id);
-  }
-  
-  // Handle node mouse out event
-  function handleNodeMouseOut() {
-    const node = d3.select(this);
-    node.classed('highlight', false);
-    
-    // Hide tooltip
-    tooltip.style.opacity = 0;
-    
-    // Remove highlights if no node is selected
-    if (!selectedNode) {
-      resetHighlights();
-    }
-  }
-  
-  // Handle node click event
-  function handleNodeClick(d) {
-    // Clear previous selection
-    gContainer.selectAll('.node.selected').classed('selected', false);
-    
-    // Mark this node as selected
-    d3.select(this).classed('selected', true);
-    selectedNode = d;
-    
-    // Highlight connected nodes
-    highlightNodeConnections(d);
-    
-    // Show node details panel
-    showNodeDetails(d);
-    detailPanel.classList.add('active');
-  }
-  
-  // Show detailed information about a node
-  function showNodeDetails(node) {
-    document.getElementById('detail-title').textContent = node.label;
-    
-    const contentEl = document.getElementById('detail-content');
-    contentEl.innerHTML = '';
-    
-    // Basic information section
-    const infoSection = document.createElement('div');
-    infoSection.className = 'detail-section';
-    
-    const typeEl = document.createElement('p');
-    typeEl.innerHTML = `<strong>Type:</strong> ${node.group.charAt(0).toUpperCase() + node.group.slice(1)}`;
-    infoSection.appendChild(typeEl);
-    
-    const fullNameEl = document.createElement('p');
-    fullNameEl.innerHTML = `<strong>Full Name:</strong> ${node.id}`;
-    infoSection.appendChild(fullNameEl);
-    
-    // Add data type information for variables and properties
-    if ((node.group === 'variable' || node.group === 'property') && node.type) {
-      const dataTypeEl = document.createElement('p');
-      dataTypeEl.innerHTML = `<strong>Data Type:</strong> <span class="data-type">${node.type}</span>`;
-      infoSection.appendChild(dataTypeEl);
-    }
-    
-    // Add file path and line number information if available
-    // Note: JSON property names are lowercase due to LowercaseNamingStrategy
-    if (node.filepath && node.linenumber > 0) {
-      const locationEl = document.createElement('p');
-      locationEl.innerHTML = `<strong>Location:</strong> ${node.filepath}:${node.linenumber}`;
-      infoSection.appendChild(locationEl);
-    }
-    
-    // Add origin information (internal/external)
-    const originEl = document.createElement('p');
-    originEl.innerHTML = `<strong>Origin:</strong> ${node.isexternal ? 'External Library' : 'Internal Code'}`;
-    infoSection.appendChild(originEl);
-    
-    const usageCount = nodeUsageCounts.get(node.id) || 0;
-    const usageEl = document.createElement('p');
-    usageEl.innerHTML = `<strong>Usage Count:</strong> ${usageCount} 
-      <span class="usage-status">(${node.used ? 'Used' : 'Unused'})</span>`;
-    infoSection.appendChild(usageEl);
-    
-    contentEl.appendChild(infoSection);
-    
-    // Unused warning if applicable
-    if (node.used === false) {
-      const warningEl = document.createElement('div');
-      warningEl.className = 'unused-warning';
-      warningEl.innerHTML = `
-        <i class="fas fa-exclamation-triangle"></i> 
-        <strong>Warning:</strong> This ${node.group} appears to be unused in the codebase. 
-        Consider removing it to improve code quality.
-      `;
-      contentEl.appendChild(warningEl);
-    }
-    
-    // Relationships section
-    const relationshipsSection = document.createElement('div');
-    relationshipsSection.className = 'detail-section';
-    
-    // Incoming references (who uses this?)
-    const incomingEl = document.createElement('div');
-    incomingEl.innerHTML = '<h3>Incoming References</h3>';
-    
-    const incomingList = document.createElement('div');
-    incomingList.className = 'relationship-list';
-    
-    const refs = nodeReferences.get(node.id);
-    if (refs && refs.incoming.length > 0) {
-      refs.incoming.forEach(ref => {
-        const refNode = graph.nodes.find(n => n.id === ref.id);
-        if (refNode) {
-          const itemEl = document.createElement('div');
-          itemEl.className = 'relationship-item';
-          itemEl.setAttribute('data-id', refNode.id);
-          itemEl.innerHTML = `
-            <div class="relationship-icon">
-              <i class="fas ${getIconForNodeType(refNode.group)}" 
-                 style="color: ${getColorForNodeType(refNode.group)}"></i>
-            </div>
-            <div>${refNode.label} (${ref.type})</div>
-          `;
-          itemEl.addEventListener('click', () => {
-            const clickedNode = graph.nodes.find(n => n.id === refNode.id);
-            if (clickedNode) {
-              selectedNode = clickedNode.id;
-              showNodeDetails(clickedNode);
-              highlightNodeConnections(clickedNode.id);
-              
-              // Focus the node in the visualization
-              focusNode(clickedNode);
-            }
-          });
-          incomingList.appendChild(itemEl);
-        }
-      });
-    } else {
-      incomingList.innerHTML = '<div>No incoming references</div>';
-    }
-    
-    incomingEl.appendChild(incomingList);
-    relationshipsSection.appendChild(incomingEl);
-    
-    // Outgoing references (what does this use?)
-    const outgoingEl = document.createElement('div');
-    outgoingEl.innerHTML = '<h3>Outgoing References</h3>';
-    
-    const outgoingList = document.createElement('div');
-    outgoingList.className = 'relationship-list';
-    
-    if (refs && refs.outgoing.length > 0) {
-      refs.outgoing.forEach(ref => {
-        const refNode = graph.nodes.find(n => n.id === ref.id);
-        if (refNode) {
-          const itemEl = document.createElement('div');
-          itemEl.className = 'relationship-item';
-          itemEl.setAttribute('data-id', refNode.id);
-          itemEl.innerHTML = `
-            <div class="relationship-icon">
-              <i class="fas ${getIconForNodeType(refNode.group)}" 
-                 style="color: ${getColorForNodeType(refNode.group)}"></i>
-            </div>
-            <div>${refNode.label} (${ref.type})</div>
-          `;
-          itemEl.addEventListener('click', () => {
-            const clickedNode = graph.nodes.find(n => n.id === refNode.id);
-            if (clickedNode) {
-              selectedNode = clickedNode.id;
-              showNodeDetails(clickedNode);
-              highlightNodeConnections(clickedNode.id);
-              
-              // Focus the node in the visualization
-              focusNode(clickedNode);
-            }
-          });
-          outgoingList.appendChild(itemEl);
-        }
-      });
-    } else {
-      outgoingList.innerHTML = '<div>No outgoing references</div>';
-    }
-    
-    outgoingEl.appendChild(outgoingList);
-    relationshipsSection.appendChild(outgoingEl);
-    
-    contentEl.appendChild(relationshipsSection);
-  }
-
-  // Focus on a specific node in the visualization
-  function focusNode(node) {
-    // Get the current transform
-    const transform = d3.zoomTransform(svg.node());
-    
-    // Calculate new transform to center on the node
-    const scale = 1.5;
-    const x = -node.x * scale + chartContainer.clientWidth / 2;
-    const y = -node.y * scale + chartContainer.clientHeight / 2;
-    
-    // Transition to the new transform
-    svg.transition().duration(750)
-      .call(zoomBehavior.transform, d3.zoomIdentity.translate(x, y).scale(scale));
-    
-    // Highlight the node
-    d3.select(`.node[data-id="${node.id}"]`).classed('highlight', true);
-  }
-  
-  // Highlight connections for a node
-  function highlightNodeConnections(nodeId) {
-    // Reset previous highlights
-    resetHighlights();
-    
-    // Find connected nodes
-    const connectedNodeIds = new Set();
-    
-    // Add the links that go to or from the selected node
-    graph.links.forEach(link => {
-      const sourceId = link.source.id || link.source;
-      const targetId = link.target.id || link.target;
-      
-      if (sourceId === nodeId) {
-        connectedNodeIds.add(targetId);
-      } else if (targetId === nodeId) {
-        connectedNodeIds.add(sourceId);
-      }
-    });
-    
-    // Fade all nodes and links
-    gContainer.selectAll('.node').classed('faded', true);
-    gContainer.selectAll('.link').classed('faded', true);
-    
-    // Highlight the selected node
-    const selectedNodeEl = gContainer.select(`.node[data-id="${nodeId}"]`);
-    selectedNodeEl.classed('faded', false).classed('highlight', true);
-    
-    // Highlight connected nodes
-    connectedNodeIds.forEach(id => {
-      gContainer.select(`.node[data-id="${id}"]`).classed('faded', false);
-    });
-    
-    // Highlight links between connected nodes
-    gContainer.selectAll('.link').each(function(d) {
-      if (connectedNodeIds.has(d.source.id || d.source) && 
-          connectedNodeIds.has(d.target.id || d.target)) {
-        d3.select(this).classed('faded', false).classed('highlight', true);
-      }
-    });
-  }
-  
-  // Reset all highlights
-  function resetHighlights() {
-    gContainer.selectAll('.node').classed('faded', false).classed('highlight', false);
-    gContainer.selectAll('.link').classed('faded', false).classed('highlight', false);
   }
   
   // Reset zoom to show the entire graph
@@ -816,96 +616,67 @@ document.addEventListener('DOMContentLoaded', function() {
     return colorMap[type] || '#ccc';
   }
   
-  // Setup event listeners for UI controls
+  // Initialize event listeners
   function setupEventListeners() {
     console.log("Setting up event listeners...");
     
-    // Node type filters (class, method, etc.)
+    // Set up node type filter listeners
     document.querySelectorAll('.node-filter').forEach(filter => {
       filter.addEventListener('change', () => {
-        console.log(`Node type filter changed: ${filter.value} = ${filter.checked}`);
+        console.log('Node type filter changed:', filter.value, filter.checked);
         applyFilters();
       });
     });
     
-    // Usage filters (used/unused)
-    const filterUsed = document.getElementById('filter-used');
-    if (filterUsed) {
-      filterUsed.addEventListener('change', () => {
-        console.log(`Used filter changed: ${filterUsed.checked}`);
+    // Set up link type filter listeners
+    document.querySelectorAll('.link-filter').forEach(filter => {
+      filter.addEventListener('change', () => {
+        console.log('Link type filter changed:', filter.value, filter.checked);
         applyFilters();
       });
-    }
+    });
     
-    const filterUnused = document.getElementById('filter-unused');
-    if (filterUnused) {
-      filterUnused.addEventListener('change', () => {
-        console.log(`Unused filter changed: ${filterUnused.checked}`);
+    // Set up usage filter listeners
+    document.querySelectorAll('.usage-filter').forEach(filter => {
+      filter.addEventListener('change', () => {
+        console.log('Usage filter changed:', filter.value, filter.checked);
         applyFilters();
       });
-    }
+    });
     
-    // Library filters (internal/external)
-    const filterInternal = document.getElementById('filter-internal');
-    if (filterInternal) {
-      filterInternal.addEventListener('change', () => {
-        console.log(`Internal filter changed: ${filterInternal.checked}`);
+    // Set up library filter listeners
+    document.querySelectorAll('.library-filter').forEach(filter => {
+      filter.addEventListener('change', () => {
+        console.log('Library filter changed:', filter.value, filter.checked);
         applyFilters();
       });
-    }
+    });
     
-    const filterExternal = document.getElementById('filter-external');
-    if (filterExternal) {
-      filterExternal.addEventListener('change', () => {
-        console.log(`External filter changed: ${filterExternal.checked}`);
-        applyFilters();
-      });
-    }
-    
-    // Search
-    const searchInput = document.getElementById('search');
+    // Set up search input
+    const searchInput = document.getElementById('search-input');
     if (searchInput) {
-      searchInput.addEventListener('input', handleSearch);
-    }
-    
-    // Zoom controls
-    const zoomInBtn = document.getElementById('zoom-in');
-    if (zoomInBtn) {
-      zoomInBtn.addEventListener('click', () => {
-        svg.transition().duration(300)
-          .call(zoomBehavior.scaleBy, 1.5);
+      searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        handleSearch(searchTerm);
       });
     }
     
-    const zoomOutBtn = document.getElementById('zoom-out');
-    if (zoomOutBtn) {
-      zoomOutBtn.addEventListener('click', () => {
-        svg.transition().duration(300)
-          .call(zoomBehavior.scaleBy, 0.66);
-      });
-    }
-    
-    const zoomResetBtn = document.getElementById('zoom-reset');
-    if (zoomResetBtn) {
-      zoomResetBtn.addEventListener('click', () => {
-        svg.transition().duration(300)
-          .call(zoomBehavior.transform, d3.zoomIdentity);
-      });
-    }
-    
-    // Detail panel close button
-    const closeDetailsBtn = document.getElementById('close-details');
-    if (closeDetailsBtn) {
-      closeDetailsBtn.addEventListener('click', () => {
-        detailPanel.classList.remove('active');
-        
-        // Reset selection state
-        gContainer.selectAll('.node.selected').classed('selected', false);
+    // Clear selection when clicking on empty space
+    svg.on('click', function(event) {
+      if (event.target === this || event.target === gContainer.node()) {
+        // Clear selection only if clicking on empty space
         selectedNode = null;
-      });
-    }
+        resetHighlights();
+        
+        // Hide detail panel
+        const detailPanel = document.getElementById('detail-panel');
+        if (detailPanel) {
+          detailPanel.classList.remove('active');
+        }
+      }
+    });
     
-    console.log("Event listeners setup complete");
+    console.log("Event listeners set up");
   }
   
   // Update node colors based on current settings
@@ -995,9 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Handle search input
-  function handleSearch() {
-    const searchTerm = document.getElementById('search').value.toLowerCase();
-    
+  function handleSearch(searchTerm) {
     if (!searchTerm) {
       // Reset all nodes and links to their filtered state
       applyFilters();
@@ -1115,6 +884,73 @@ document.addEventListener('DOMContentLoaded', function() {
   // Hide loading overlay
   function hideLoading() {
     loadingOverlay.style.display = 'none';
+  }
+  
+  // Handle node click event
+  function nodeClicked(event, d) {
+    console.log("Node clicked:", d.id, d.group);
+    
+    // Clear previous selection
+    gContainer.selectAll('.node.selected').classed('selected', false);
+    
+    // Mark this node as selected
+    d3.select(event.currentTarget).classed('selected', true);
+    selectedNode = d;
+    
+    // Highlight connected nodes and links
+    highlightNodeConnections(d.id);
+    
+    // Show node details panel
+    showNodeDetails(d);
+    
+    // Activate details panel
+    const detailPanel = document.getElementById('detail-panel');
+    if (detailPanel) {
+      detailPanel.classList.add('active');
+    }
+    
+    // Prevent event bubbling
+    event.stopPropagation();
+  }
+  
+  // Handle node mouse over event
+  function nodeMouseOver(event, d) {
+    console.log("Node mouseover:", d.id);
+    
+    // Show tooltip
+    const tooltip = document.getElementById('tooltip');
+    if (tooltip) {
+      tooltip.style.opacity = 1;
+      tooltip.style.left = (event.pageX + 10) + 'px';
+      tooltip.style.top = (event.pageY - 10) + 'px';
+      
+      const tooltipTitle = document.getElementById('tooltip-title');
+      const tooltipType = document.getElementById('tooltip-type');
+      const tooltipUsed = document.getElementById('tooltip-used');
+      
+      if (tooltipTitle) tooltipTitle.textContent = d.label || d.id;
+      if (tooltipType) tooltipType.textContent = d.group.charAt(0).toUpperCase() + d.group.slice(1);
+      if (tooltipUsed) tooltipUsed.textContent = d.used ? 'Yes' : 'No';
+    }
+    
+    // Don't highlight connections on hover if a node is already selected
+    if (!selectedNode) {
+      d3.select(event.currentTarget).classed('hover', true);
+    }
+  }
+  
+  // Handle node mouse out event
+  function nodeMouseOut(event, d) {
+    console.log("Node mouseout:", d.id);
+    
+    // Hide tooltip
+    const tooltip = document.getElementById('tooltip');
+    if (tooltip) {
+      tooltip.style.opacity = 0;
+    }
+    
+    // Remove hover class
+    d3.select(event.currentTarget).classed('hover', false);
   }
   
   // Initialize the visualization
