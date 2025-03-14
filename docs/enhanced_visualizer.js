@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .on('start', dragstarted)
         .on('drag', dragged)
         .on('end', dragended))
-      .on('click', nodeClicked);
+      .on('click', handleNodeClick);
     
     // Add circles to nodes
     node.append('circle')
@@ -460,6 +460,55 @@ document.addEventListener('DOMContentLoaded', function() {
     return null;
   }
   
+  // Highlight connections for a selected node
+  function highlightConnections(node) {
+    // Reset previous highlights
+    resetHighlights();
+    
+    // Find all connected nodes (both incoming and outgoing)
+    const connectedNodeIds = new Set();
+    
+    // Add the links that go to or from the selected node
+    graph.links.forEach(link => {
+      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+      
+      if (sourceId === node.id) {
+        connectedNodeIds.add(targetId);
+      } else if (targetId === node.id) {
+        connectedNodeIds.add(sourceId);
+      }
+    });
+    
+    // Fade all nodes and links
+    gContainer.selectAll('.node').classed('faded', true);
+    gContainer.selectAll('.link').classed('faded', true);
+    
+    // Highlight the selected node and its connections
+    gContainer.select(`.node[data-id="${node.id}"]`).classed('faded', false).classed('highlighted', true);
+    
+    // Highlight connected nodes
+    connectedNodeIds.forEach(id => {
+      gContainer.select(`.node[data-id="${id}"]`).classed('faded', false).classed('connected', true);
+    });
+    
+    // Highlight links between the selected node and its connections
+    gContainer.selectAll('.link').each(function(d) {
+      const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+      const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+      
+      if (sourceId === node.id || targetId === node.id) {
+        d3.select(this).classed('faded', false).classed('highlighted', true);
+      }
+    });
+  }
+  
+  // Reset all highlights
+  function resetHighlights() {
+    gContainer.selectAll('.node').classed('faded', false).classed('highlighted', false).classed('connected', false);
+    gContainer.selectAll('.link').classed('faded', false).classed('highlighted', false);
+  }
+  
   // Handle node mouse over event
   function handleNodeMouseOver(event, d) {
     const node = d3.select(this);
@@ -493,18 +542,20 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Handle node click event
-  function handleNodeClick(event, d) {
-    // Toggle selection
-    if (selectedNode === d.id) {
-      selectedNode = null;
-      detailPanel.classList.remove('active');
-      resetHighlights();
-    } else {
-      selectedNode = d.id;
-      showNodeDetails(d);
-      highlightConnections(d.id);
-      detailPanel.classList.add('active');
-    }
+  function handleNodeClick(d) {
+    // Clear previous selection
+    gContainer.selectAll('.node.selected').classed('selected', false);
+    
+    // Mark this node as selected
+    d3.select(this).classed('selected', true);
+    selectedNode = d;
+    
+    // Highlight connected nodes
+    highlightConnections(d);
+    
+    // Show node details panel
+    showNodeDetails(d);
+    detailPanel.classList.add('active');
   }
   
   // Show detailed information about a node
@@ -681,14 +732,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset previous highlights
     resetHighlights();
     
-    // Fade all nodes and links
-    gContainer.selectAll('.node').classed('faded', true);
-    gContainer.selectAll('.link').classed('faded', true);
-    
-    // Highlight the selected node
-    const selectedNodeEl = gContainer.select(`.node[data-id="${nodeId}"]`);
-    selectedNodeEl.classed('faded', false).classed('highlight', true);
-    
     // Find connected nodes
     const connectedNodeIds = new Set();
     connectedNodeIds.add(nodeId);
@@ -699,6 +742,14 @@ document.addEventListener('DOMContentLoaded', function() {
       refs.incoming.forEach(ref => connectedNodeIds.add(ref.id));
       refs.outgoing.forEach(ref => connectedNodeIds.add(ref.id));
     }
+    
+    // Fade all nodes and links
+    gContainer.selectAll('.node').classed('faded', true);
+    gContainer.selectAll('.link').classed('faded', true);
+    
+    // Highlight the selected node
+    const selectedNodeEl = gContainer.select(`.node[data-id="${nodeId}"]`);
+    selectedNodeEl.classed('faded', false).classed('highlight', true);
     
     // Highlight connected nodes
     connectedNodeIds.forEach(id => {
@@ -1004,7 +1055,18 @@ document.addEventListener('DOMContentLoaded', function() {
     loadingOverlay.style.display = 'flex';
     
     setTimeout(() => {
-      const stats = calculateStats();
+      const stats = {
+        namespaces: graph.nodes.filter(n => n.group === 'namespace').length,
+        classes: graph.nodes.filter(n => n.group === 'class').length,
+        methods: graph.nodes.filter(n => n.group === 'method').length,
+        properties: graph.nodes.filter(n => n.group === 'property').length,
+        variables: graph.nodes.filter(n => n.group === 'variable').length,
+        unused: graph.nodes.filter(n => !n.used).length,
+        external: graph.nodes.filter(n => n.isexternal).length,
+        internal: graph.nodes.filter(n => !n.isexternal).length,
+        total: graph.nodes.length
+      };
+      
       document.getElementById('namespace-count').textContent = stats.namespaces;
       document.getElementById('class-count').textContent = stats.classes;
       document.getElementById('method-count').textContent = stats.methods;
