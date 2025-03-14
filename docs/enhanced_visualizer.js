@@ -1,27 +1,26 @@
 // Enhanced C# Code Graph Visualizer
 document.addEventListener('DOMContentLoaded', function() {
-  let graph = null; // Will hold our graph data
-  let simulation = null; // Force simulation
-  let svg = null;
-  let gContainer = null;
-  let zoomBehavior = null;
-  
-  // DOM elements
+  // Global variables
+  let graph;
+  let svg;
+  let gContainer;
+  let zoomBehavior;
+  let simulation;
+  let nodeUsageCounts = new Map();
+  let nodeReferences = new Map();
+  let selectedNode = null;
+  let currentLayout = 'force';
+  let highlightUnused = false;
+
+  // DOM Elements
   const chartContainer = document.getElementById('chart');
-  const tooltip = document.getElementById('tooltip');
   const detailPanel = document.getElementById('detail-panel');
   const loadingOverlay = document.getElementById('loading-overlay');
+  const tooltip = document.getElementById('tooltip');
   const filterContainer = document.getElementById('filters');
   
   // Track current visualization state
-  let currentLayout = 'force'; // 'force' or 'hierarchical'
-  let highlightUnused = false;
-  let selectedNode = null;
-  
-  // Store processed data for analysis
   let unusedElements = new Set();
-  let nodeUsageCounts = new Map();
-  let nodeReferences = new Map(); // Maps node IDs to their incoming/outgoing references
   
   // Initialize the visualization
   function init() {
@@ -245,15 +244,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Draw nodes
     const node = gContainer.selectAll('.node')
-      .data(graph.nodes)
-      .enter().append('g')
-      .attr('class', d => `node ${d.used === false ? 'unused' : 'used'}`)
+      .data(graph.nodes, d => d.id)
+      .enter()
+      .append('g')
+      .attr('class', d => `node ${d.used ? 'used' : 'unused'}`)
       .attr('data-id', d => d.id)
       .attr('data-group', d => d.group)
+      .attr('data-used', d => d.used)
+      .attr('data-external', d => d.isexternal)
       .call(d3.drag()
         .on('start', dragstarted)
         .on('drag', dragged)
-        .on('end', dragended));
+        .on('end', dragended))
+      .on('click', nodeClicked);
     
     // Add circles to nodes
     node.append('circle')
@@ -782,48 +785,52 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Setup event listeners for UI controls
   function setupEventListeners() {
-    // Layout toggle buttons
-    document.getElementById('toggle-hierarchical').addEventListener('click', () => {
-      switchToHierarchicalLayout();
+    // Layout toggle
+    document.getElementById('toggle-layout').addEventListener('click', () => {
+      currentLayout = currentLayout === 'force' ? 'hierarchical' : 'force';
+      document.getElementById('toggle-layout').textContent = 
+        currentLayout === 'force' ? 'Switch to Hierarchical Layout' : 'Switch to Force Layout';
+      
+      // Update the visualization
+      updateLayout();
     });
     
-    document.getElementById('toggle-force-directed').addEventListener('click', () => {
-      switchToForceDirectedLayout();
-    });
-    
-    // Unused elements toggle
+    // Highlight unused toggle
     document.getElementById('toggle-highlight-unused').addEventListener('click', () => {
       highlightUnused = !highlightUnused;
       
       // Update the visualization
-      gContainer.selectAll('.node circle')
-        .transition().duration(500)
-        .attr('fill', d => {
-          if (highlightUnused && d.used === false) {
-            return getComputedStyle(document.documentElement).getPropertyValue('--unused-color');
-          }
-          return getNodeColor(d);
-        });
+      updateNodeColors();
     });
     
-    // Node filters
+    // Node type filters
     document.querySelectorAll('.node-filter').forEach(filter => {
-      filter.addEventListener('change', applyFilters);
-    });
-    
-    // Link filters
-    document.querySelectorAll('.link-filter').forEach(filter => {
-      filter.addEventListener('change', filterLinks);
+      filter.addEventListener('change', () => {
+        console.log(`Node filter changed: ${filter.value} = ${filter.checked}`);
+        applyFilters();
+      });
     });
     
     // Usage filters
-    document.querySelectorAll('.usage-filter').forEach(filter => {
-      filter.addEventListener('change', applyFilters);
+    document.getElementById('filter-used').addEventListener('change', () => {
+      console.log(`Used filter changed: ${document.getElementById('filter-used').checked}`);
+      applyFilters();
+    });
+    
+    document.getElementById('filter-unused').addEventListener('change', () => {
+      console.log(`Unused filter changed: ${document.getElementById('filter-unused').checked}`);
+      applyFilters();
     });
     
     // Library filters
-    document.querySelectorAll('.library-filter').forEach(filter => {
-      filter.addEventListener('change', applyFilters);
+    document.getElementById('filter-internal').addEventListener('change', () => {
+      console.log(`Internal filter changed: ${document.getElementById('filter-internal').checked}`);
+      applyFilters();
+    });
+    
+    document.getElementById('filter-external').addEventListener('change', () => {
+      console.log(`External filter changed: ${document.getElementById('filter-external').checked}`);
+      applyFilters();
     });
     
     // Search
@@ -850,11 +857,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Initial call to apply filters
-    applyFilters();
+    setTimeout(applyFilters, 100); // Slight delay to ensure DOM is ready
+  }
+  
+  // Update node colors based on current settings
+  function updateNodeColors() {
+    gContainer.selectAll('.node circle')
+      .transition().duration(500)
+      .attr('fill', d => {
+        if (highlightUnused && !d.used) {
+          return getComputedStyle(document.documentElement).getPropertyValue('--unused-color');
+        }
+        return getNodeColor(d);
+      });
   }
   
   // Apply all filters
   function applyFilters() {
+    if (!gContainer) {
+      console.error("Cannot apply filters, gContainer is not initialized yet");
+      return;
+    }
+    
+    console.log("Applying filters...");
+    
     // Get selected node types
     const selectedGroups = [];
     document.querySelectorAll('.node-filter:checked').forEach(filter => {
@@ -862,82 +888,66 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Get usage filter state
-    const showUsed = document.querySelector('.usage-filter[value="used"]').checked;
-    const showUnused = document.querySelector('.usage-filter[value="unused"]').checked;
+    const showUsed = document.getElementById('filter-used').checked;
+    const showUnused = document.getElementById('filter-unused').checked;
     
     // Get library filter state
     const showInternal = document.getElementById('filter-internal').checked;
     const showExternal = document.getElementById('filter-external').checked;
     
-    console.log("Filters:", { selectedGroups, showUsed, showUnused, showInternal, showExternal });
+    console.log("Filter settings:", { 
+      types: selectedGroups, 
+      usage: { showUsed, showUnused }, 
+      library: { showInternal, showExternal } 
+    });
     
-    // Apply all filters together
+    // Apply filters directly to the graph data nodes
+    graph.nodes.forEach(node => {
+      // Start with assuming the node is visible
+      let isVisible = true;
+      
+      // Type filter
+      if (!selectedGroups.includes(node.group)) {
+        isVisible = false;
+      }
+      
+      // Usage filter
+      if (isVisible) {
+        if (node.used && !showUsed) isVisible = false;
+        if (!node.used && !showUnused) isVisible = false;
+      }
+      
+      // Library filter
+      if (isVisible) {
+        if (node.isexternal && !showExternal) isVisible = false;
+        if (!node.isexternal && !showInternal) isVisible = false;
+      }
+      
+      // Store visibility in the node object
+      node.visible = isVisible;
+    });
+    
+    // Apply visibility to DOM elements
     gContainer.selectAll('.node')
-      .style('display', function(d) {
-        // Type filter
-        if (!selectedGroups.includes(d.group)) {
-          console.log(`Node ${d.id} hidden: group ${d.group} not in selected groups`);
-          return 'none';
-        }
-        
-        // Usage filter
-        if (d.used && !showUsed) {
-          console.log(`Node ${d.id} hidden: used but showUsed is false`);
-          return 'none';
-        }
-        if (!d.used && !showUnused) {
-          console.log(`Node ${d.id} hidden: unused but showUnused is false`);
-          return 'none';
-        }
-        
-        // Library filter - debugging to find the issue
-        console.log(`Checking external for ${d.id}: isexternal=${d.isexternal}, showExternal=${showExternal}, showInternal=${showInternal}`);
-        
-        if (d.isexternal && !showExternal) {
-          console.log(`Node ${d.id} hidden: external library`);
-          return 'none';
-        }
-        if (!d.isexternal && !showInternal) {
-          console.log(`Node ${d.id} hidden: internal code`);
-          return 'none';
-        }
-        
-        console.log(`Node ${d.id} visible`);
-        return 'block';
-      });
+      .style('display', d => d.visible ? 'block' : 'none');
     
-    // Update links
-    filterLinksForHiddenNodes();
-  }
-  
-  // Filter links based on type
-  function filterLinks() {
-    const selectedTypes = Array.from(document.querySelectorAll('.link-filter:checked'))
-      .map(checkbox => checkbox.value);
-    
+    // Update links visibility
     gContainer.selectAll('.link')
       .style('display', d => {
-        return selectedTypes.includes(d.type) ? 'block' : 'none';
-      });
-  }
-  
-  // Filter links connected to hidden nodes
-  function filterLinksForHiddenNodes() {
-    gContainer.selectAll('.link')
-      .style('display', function(d) {
         // Get source and target nodes
-        const sourceNode = gContainer.select(`.node[data-id="${d.source.id || d.source}"]`);
-        const targetNode = gContainer.select(`.node[data-id="${d.target.id || d.target}"]`);
+        const source = typeof d.source === 'object' ? d.source.id : d.source;
+        const target = typeof d.target === 'object' ? d.target.id : d.target;
         
-        // Check if either end is hidden
-        const sourceDisplay = sourceNode.style('display');
-        const targetDisplay = targetNode.style('display');
+        // Find the node objects
+        const sourceNode = graph.nodes.find(n => n.id === source);
+        const targetNode = graph.nodes.find(n => n.id === target);
         
-        if (sourceDisplay === 'none' || targetDisplay === 'none') {
+        // If either node is not visible, hide the link
+        if (!sourceNode || !targetNode || !sourceNode.visible || !targetNode.visible) {
           return 'none';
         }
         
-        return null; // Use the current display value based on link type filters
+        return 'block';
       });
   }
   
@@ -948,24 +958,45 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!searchTerm) {
       // Reset all nodes and links to their filtered state
       applyFilters();
-      filterLinks();
       return;
     }
     
-    // Apply search filter
+    // First apply regular filters to update node.visible property
+    applyFilters();
+    
+    // Then apply search term on top of that
+    graph.nodes.forEach(node => {
+      if (!node.visible) return; // Skip already hidden nodes
+      
+      // Hide node if it doesn't match search
+      if (!node.id.toLowerCase().includes(searchTerm) && 
+          !node.label.toLowerCase().includes(searchTerm)) {
+        node.visible = false;
+      }
+    });
+    
+    // Update visibility in DOM
     gContainer.selectAll('.node')
+      .style('display', d => d.visible ? 'block' : 'none');
+    
+    // Update links
+    gContainer.selectAll('.link')
       .style('display', d => {
-        // First apply regular filters
-        if (!d.id.toLowerCase().includes(searchTerm) && 
-            !d.label.toLowerCase().includes(searchTerm)) {
+        // Get source and target nodes
+        const source = typeof d.source === 'object' ? d.source.id : d.source;
+        const target = typeof d.target === 'object' ? d.target.id : d.target;
+        
+        // Find the node objects
+        const sourceNode = graph.nodes.find(n => n.id === source);
+        const targetNode = graph.nodes.find(n => n.id === target);
+        
+        // If either node is not visible, hide the link
+        if (!sourceNode || !targetNode || !sourceNode.visible || !targetNode.visible) {
           return 'none';
         }
-        // Otherwise, show if it passes regular filters
-        return null;
+        
+        return 'block';
       });
-    
-    // Update links for visible nodes
-    filterLinksForHiddenNodes();
   }
   
   // Update node stats
