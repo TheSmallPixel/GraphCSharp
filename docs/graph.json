@@ -121,6 +121,12 @@
       "used": true
     },
     {
+      "id": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
+      "group": "method",
+      "label": "NodeExists",
+      "used": false
+    },
+    {
       "id": "CodeAnalysisTool.Program.Main",
       "group": "method",
       "label": "Main",
@@ -197,6 +203,486 @@
       "group": "property",
       "label": "Type",
       "used": false
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxWalker.Visit",
+      "group": "external-property",
+      "label": "Visit",
+      "used": true
+    },
+    {
+      "id": "System.Console.WriteLine",
+      "group": "external-property",
+      "label": "WriteLine",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.SyntaxNode.ToString",
+      "group": "external-property",
+      "label": "ToString",
+      "used": true
+    },
+    {
+      "id": "System.Collections.Generic.HashSet.Add",
+      "group": "external-property",
+      "label": "Add",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitNamespaceDeclaration",
+      "group": "external-property",
+      "label": "VisitNamespaceDeclaration",
+      "used": true
+    },
+    {
+      "id": "System.String.IsNullOrEmpty",
+      "group": "external-property",
+      "label": "IsNullOrEmpty",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpExtensions.GetTypeInfo",
+      "group": "external-property",
+      "label": "GetTypeInfo",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitClassDeclaration",
+      "group": "external-property",
+      "label": "VisitClassDeclaration",
+      "used": true
+    },
+    {
+      "id": "System.Linq.Enumerable.Any",
+      "group": "external-property",
+      "label": "Any",
+      "used": true
+    },
+    {
+      "id": "System.Collections.Generic.Dictionary.ContainsKey",
+      "group": "external-property",
+      "label": "ContainsKey",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitMethodDeclaration",
+      "group": "external-property",
+      "label": "VisitMethodDeclaration",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitPropertyDeclaration",
+      "group": "external-property",
+      "label": "VisitPropertyDeclaration",
+      "used": true
+    },
+    {
+      "id": "System.Collections.Generic.HashSet.Contains",
+      "group": "external-property",
+      "label": "Contains",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitLocalDeclarationStatement",
+      "group": "external-property",
+      "label": "VisitLocalDeclarationStatement",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitFieldDeclaration",
+      "group": "external-property",
+      "label": "VisitFieldDeclaration",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitInvocationExpression",
+      "group": "external-property",
+      "label": "VisitInvocationExpression",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpExtensions.GetSymbolInfo",
+      "group": "external-property",
+      "label": "GetSymbolInfo",
+      "used": true
+    },
+    {
+      "id": "System.Collections.Generic.List.Add",
+      "group": "external-property",
+      "label": "Add",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitMemberAccessExpression",
+      "group": "external-property",
+      "label": "VisitMemberAccessExpression",
+      "used": true
+    },
+    {
+      "id": "System.Collections.Generic.List.Contains",
+      "group": "external-property",
+      "label": "Contains",
+      "used": true
+    },
+    {
+      "id": "System.Linq.Enumerable.Last",
+      "group": "external-property",
+      "label": "Last",
+      "used": true
+    },
+    {
+      "id": "System.String.Split",
+      "group": "external-property",
+      "label": "Split",
+      "used": true
+    },
+    {
+      "id": "System.String.EndsWith",
+      "group": "external-property",
+      "label": "EndsWith",
+      "used": true
+    },
+    {
+      "id": "System.Char.IsUpper",
+      "group": "external-property",
+      "label": "IsUpper",
+      "used": true
+    },
+    {
+      "id": "System.String.LastIndexOf",
+      "group": "external-property",
+      "label": "LastIndexOf",
+      "used": true
+    },
+    {
+      "id": "System.String.Substring",
+      "group": "external-property",
+      "label": "Substring",
+      "used": true
+    },
+    {
+      "id": "System.IO.Directory.GetFiles",
+      "group": "external-property",
+      "label": "GetFiles",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText",
+      "group": "external-property",
+      "label": "ParseText",
+      "used": true
+    },
+    {
+      "id": "System.IO.File.ReadAllText",
+      "group": "external-property",
+      "label": "ReadAllText",
+      "used": true
+    },
+    {
+      "id": "System.Linq.Enumerable.Where",
+      "group": "external-property",
+      "label": "Where",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.SyntaxTree.GetDiagnostics",
+      "group": "external-property",
+      "label": "GetDiagnostics",
+      "used": true
+    },
+    {
+      "id": "System.Linq.Enumerable.Take",
+      "group": "external-property",
+      "label": "Take",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.Diagnostic.GetMessage",
+      "group": "external-property",
+      "label": "GetMessage",
+      "used": true
+    },
+    {
+      "id": "System.Linq.Enumerable.Count",
+      "group": "external-property",
+      "label": "Count",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create",
+      "group": "external-property",
+      "label": "Create",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.Compilation.GetSemanticModel",
+      "group": "external-property",
+      "label": "GetSemanticModel",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.SyntaxTree.GetRoot",
+      "group": "external-property",
+      "label": "GetRoot",
+      "used": true
+    },
+    {
+      "id": "System.IO.Directory.CreateDirectory",
+      "group": "external-property",
+      "label": "CreateDirectory",
+      "used": true
+    },
+    {
+      "id": "System.IO.Path.Combine",
+      "group": "external-property",
+      "label": "Combine",
+      "used": true
+    },
+    {
+      "id": "System.IO.File.WriteAllText",
+      "group": "external-property",
+      "label": "WriteAllText",
+      "used": true
+    },
+    {
+      "id": "Newtonsoft.Json.JsonConvert.SerializeObject",
+      "group": "external-property",
+      "label": "SerializeObject",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.MetadataReference.CreateFromFile",
+      "group": "external-property",
+      "label": "CreateFromFile",
+      "used": true
+    },
+    {
+      "id": "System.IO.Path.GetDirectoryName",
+      "group": "external-property",
+      "label": "GetDirectoryName",
+      "used": true
+    },
+    {
+      "id": "System.IO.File.Exists",
+      "group": "external-property",
+      "label": "Exists",
+      "used": true
+    },
+    {
+      "id": "System.Reflection.Assembly.GetEntryAssembly",
+      "group": "external-property",
+      "label": "GetEntryAssembly",
+      "used": true
+    },
+    {
+      "id": "System.Reflection.Assembly.GetReferencedAssemblies",
+      "group": "external-property",
+      "label": "GetReferencedAssemblies",
+      "used": true
+    },
+    {
+      "id": "System.Reflection.Assembly.Load",
+      "group": "external-property",
+      "label": "Load",
+      "used": true
+    },
+    {
+      "id": "System.String.ToLowerInvariant",
+      "group": "external-property",
+      "label": "ToLowerInvariant",
+      "used": true
+    },
+    {
+      "id": "System.Exception.Message",
+      "group": "external-property",
+      "label": "Message",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.NamespaceDeclarationSyntax.Name",
+      "group": "external-property",
+      "label": "Name",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.SyntaxToken.Text",
+      "group": "external-property",
+      "label": "Text",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax.Identifier",
+      "group": "external-property",
+      "label": "Identifier",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax.BaseList",
+      "group": "external-property",
+      "label": "BaseList",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.BaseListSyntax.Types",
+      "group": "external-property",
+      "label": "Types",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.BaseTypeSyntax.Type",
+      "group": "external-property",
+      "label": "Type",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.TypeInfo.Type",
+      "group": "external-property",
+      "label": "Type",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.MethodDeclarationSyntax.Identifier",
+      "group": "external-property",
+      "label": "Identifier",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.MethodDeclarationSyntax.Modifiers",
+      "group": "external-property",
+      "label": "Modifiers",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.SyntaxToken.ValueText",
+      "group": "external-property",
+      "label": "ValueText",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.PropertyDeclarationSyntax.Identifier",
+      "group": "external-property",
+      "label": "Identifier",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.PropertyDeclarationSyntax.Modifiers",
+      "group": "external-property",
+      "label": "Modifiers",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.PropertyDeclarationSyntax.Type",
+      "group": "external-property",
+      "label": "Type",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.VariableDeclarationSyntax.Variables",
+      "group": "external-property",
+      "label": "Variables",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.LocalDeclarationStatementSyntax.Declaration",
+      "group": "external-property",
+      "label": "Declaration",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.VariableDeclaratorSyntax.Identifier",
+      "group": "external-property",
+      "label": "Identifier",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.VariableDeclarationSyntax.Type",
+      "group": "external-property",
+      "label": "Type",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.CSharp.Syntax.FieldDeclarationSyntax.Declaration",
+      "group": "external-property",
+      "label": "Declaration",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.SymbolInfo.Symbol",
+      "group": "external-property",
+      "label": "Symbol",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.ISymbol.ContainingNamespace",
+      "group": "external-property",
+      "label": "ContainingNamespace",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.ISymbol.Name",
+      "group": "external-property",
+      "label": "Name",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.ISymbol.ContainingType",
+      "group": "external-property",
+      "label": "ContainingType",
+      "used": true
+    },
+    {
+      "id": "System.Collections.Generic.KeyValuePair.Value",
+      "group": "external-property",
+      "label": "Value",
+      "used": true
+    },
+    {
+      "id": "System.Collections.Generic.KeyValuePair.Key",
+      "group": "external-property",
+      "label": "Key",
+      "used": true
+    },
+    {
+      "id": "System.Array.Length",
+      "group": "external-property",
+      "label": "Length",
+      "used": true
+    },
+    {
+      "id": "Microsoft.CodeAnalysis.Diagnostic.Severity",
+      "group": "external-property",
+      "label": "Severity",
+      "used": true
+    },
+    {
+      "id": "System.Collections.Generic.List.Count",
+      "group": "external-property",
+      "label": "Count",
+      "used": true
+    },
+    {
+      "id": "System.Exception.StackTrace",
+      "group": "external-property",
+      "label": "StackTrace",
+      "used": true
+    },
+    {
+      "id": "System.Reflection.Assembly.Location",
+      "group": "external-property",
+      "label": "Location",
+      "used": true
+    },
+    {
+      "id": "System.Type.Assembly",
+      "group": "external-property",
+      "label": "Assembly",
+      "used": true
+    },
+    {
+      "id": "System.Reflection.AssemblyName.Name",
+      "group": "external-property",
+      "label": "Name",
+      "used": true
     }
   ],
   "links": [
@@ -293,6 +779,11 @@
     {
       "source": "CodeAnalysisTool.CodeGraphWalker",
       "target": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker",
+      "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
       "type": "containment"
     },
     {
@@ -552,6 +1043,11 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.KeyValuePair.Value",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "CodeAnalysisTool.D3Graph.Nodes",
       "type": "reference"
     },
@@ -566,9 +1062,14 @@
       "type": "external"
     },
     {
-      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
-      "target": "System.Collections.Generic.KeyValuePair.Value",
-      "type": "external"
+      "source": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
+      "target": "CodeAnalysisTool.D3Graph.Nodes",
+      "type": "reference"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
+      "target": "CodeAnalysisTool.D3Node.Id",
+      "type": "reference"
     },
     {
       "source": "CodeAnalysisTool.Program.Main",
@@ -977,6 +1478,26 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Contains",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Contains",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "System.Collections.Generic.List.Add",
       "type": "external"
     },
@@ -1042,6 +1563,41 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.String.EndsWith",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Linq.Enumerable.Last",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.String.Split",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Char.IsUpper",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.List.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Linq.Enumerable.Last",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.String.Split",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "System.String.LastIndexOf",
       "type": "external"
     },
@@ -1102,6 +1658,16 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
+      "type": "call"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
+      "type": "call"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "System.Collections.Generic.HashSet.Contains",
       "type": "external"
     },
@@ -1112,12 +1678,27 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
+      "type": "call"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
+      "type": "call"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "System.Collections.Generic.HashSet.Contains",
       "type": "external"
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "System.Collections.Generic.List.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
+      "target": "System.Linq.Enumerable.Any",
       "type": "external"
     },
     {
