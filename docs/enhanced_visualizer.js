@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const tooltip = document.getElementById('tooltip');
   const detailPanel = document.getElementById('detail-panel');
   const loadingOverlay = document.getElementById('loading-overlay');
+  const filterContainer = document.getElementById('filters');
   
   // Track current visualization state
   let currentLayout = 'force'; // 'force' or 'hierarchical'
@@ -763,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Node filters
     document.querySelectorAll('.node-filter').forEach(filter => {
-      filter.addEventListener('change', filterNodes);
+      filter.addEventListener('change', applyFilters);
     });
     
     // Link filters
@@ -773,7 +774,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Usage filters
     document.querySelectorAll('.usage-filter').forEach(filter => {
-      filter.addEventListener('change', filterByUsage);
+      filter.addEventListener('change', applyFilters);
+    });
+    
+    // Library filters
+    document.querySelectorAll('.library-filter').forEach(filter => {
+      filter.addEventListener('change', applyFilters);
     });
     
     // Search
@@ -800,17 +806,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Filter nodes based on type
-  function filterNodes() {
-    const selectedGroups = Array.from(document.querySelectorAll('.node-filter:checked'))
-      .map(checkbox => checkbox.value);
+  // Apply all filters
+  function applyFilters() {
+    // Get selected node types
+    const selectedGroups = [];
+    document.querySelectorAll('.node-filter').forEach(filter => {
+      if (filter.checked) {
+        // Extract group from id (e.g., 'filter-namespace' -> 'namespace')
+        const group = filter.id.replace('filter-', '');
+        selectedGroups.push(group);
+      }
+    });
     
+    // Get usage filter state
+    const showUsed = document.getElementById('filter-used').checked;
+    const showUnused = document.getElementById('filter-unused').checked;
+    
+    // Get library filter state
+    const showInternal = document.getElementById('filter-internal').checked;
+    const showExternal = document.getElementById('filter-external').checked;
+    
+    // Apply all filters together
     gContainer.selectAll('.node')
-      .style('display', d => {
-        return selectedGroups.includes(d.group) ? 'block' : 'none';
+      .style('display', function(d) {
+        // Type filter
+        if (!selectedGroups.includes(d.group)) return 'none';
+        
+        // Usage filter
+        if (d.used && !showUsed) return 'none';
+        if (!d.used && !showUnused) return 'none';
+        
+        // Library filter
+        if (d.isexternal && !showExternal) return 'none';
+        if (!d.isexternal && !showInternal) return 'none';
+        
+        return 'block';
       });
     
-    // Also hide links connected to hidden nodes
+    // Update links
     filterLinksForHiddenNodes();
   }
   
@@ -845,31 +878,14 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
   
-  // Filter nodes based on usage status
-  function filterByUsage() {
-    const showUsed = document.querySelector('.usage-filter[value="used"]').checked;
-    const showUnused = document.querySelector('.usage-filter[value="unused"]').checked;
-    
-    gContainer.selectAll('.node')
-      .style('display', d => {
-        if (d.used === false && !showUnused) return 'none';
-        if (d.used !== false && !showUsed) return 'none';
-        return null; // Use current display based on node type filters
-      });
-    
-    // Also update links
-    filterLinksForHiddenNodes();
-  }
-  
   // Handle search input
   function handleSearch() {
     const searchTerm = document.getElementById('search').value.toLowerCase();
     
     if (!searchTerm) {
       // Reset all nodes and links to their filtered state
-      filterNodes();
+      applyFilters();
       filterLinks();
-      filterByUsage();
       return;
     }
     
@@ -932,6 +948,108 @@ document.addEventListener('DOMContentLoaded', function() {
   function hideLoading() {
     loadingOverlay.style.display = 'none';
   }
+  
+  // Add type filters
+  const filterOptions = [
+    { id: 'filter-namespace', group: 'namespace', label: 'Namespaces', checked: true },
+    { id: 'filter-class', group: 'class', label: 'Classes', checked: true },
+    { id: 'filter-method', group: 'method', label: 'Methods', checked: true },
+    { id: 'filter-property', group: 'property', label: 'Properties', checked: true },
+    { id: 'filter-variable', group: 'variable', label: 'Variables', checked: true }
+  ];
+  
+  // Usage filter options
+  const usageFilterOptions = [
+    { id: 'filter-used', status: 'used', label: 'Used Elements', checked: true },
+    { id: 'filter-unused', status: 'unused', label: 'Unused Elements', checked: true }
+  ];
+  
+  // Library filter options
+  const libraryFilterOptions = [
+    { id: 'filter-internal', origin: 'internal', label: 'Internal Code', checked: true },
+    { id: 'filter-external', origin: 'external', label: 'External Libraries', checked: false }
+  ];
+  
+  // Add type filters
+  const typeFilterSection = document.createElement('div');
+  typeFilterSection.className = 'filter-section';
+  typeFilterSection.innerHTML = '<h3>Element Types</h3>';
+  
+  filterOptions.forEach(option => {
+    const filterItem = document.createElement('div');
+    filterItem.className = 'filter-item';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = option.id;
+    checkbox.className = 'node-filter';
+    checkbox.checked = option.checked;
+    checkbox.addEventListener('change', applyFilters);
+    
+    const label = document.createElement('label');
+    label.htmlFor = option.id;
+    label.textContent = option.label;
+    
+    filterItem.appendChild(checkbox);
+    filterItem.appendChild(label);
+    typeFilterSection.appendChild(filterItem);
+  });
+  
+  filterContainer.appendChild(typeFilterSection);
+  
+  // Add usage filter section
+  const usageFilterSection = document.createElement('div');
+  usageFilterSection.className = 'filter-section';
+  usageFilterSection.innerHTML = '<h3>Usage Status</h3>';
+  
+  usageFilterOptions.forEach(option => {
+    const filterItem = document.createElement('div');
+    filterItem.className = 'filter-item';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = option.id;
+    checkbox.className = 'usage-filter';
+    checkbox.checked = option.checked;
+    checkbox.addEventListener('change', applyFilters);
+    
+    const label = document.createElement('label');
+    label.htmlFor = option.id;
+    label.textContent = option.label;
+    
+    filterItem.appendChild(checkbox);
+    filterItem.appendChild(label);
+    usageFilterSection.appendChild(filterItem);
+  });
+  
+  filterContainer.appendChild(usageFilterSection);
+  
+  // Add library filter section
+  const libraryFilterSection = document.createElement('div');
+  libraryFilterSection.className = 'filter-section';
+  libraryFilterSection.innerHTML = '<h3>Code Origin</h3>';
+  
+  libraryFilterOptions.forEach(option => {
+    const filterItem = document.createElement('div');
+    filterItem.className = 'filter-item';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = option.id;
+    checkbox.className = 'library-filter';
+    checkbox.checked = option.checked;
+    checkbox.addEventListener('change', applyFilters);
+    
+    const label = document.createElement('label');
+    label.htmlFor = option.id;
+    label.textContent = option.label;
+    
+    filterItem.appendChild(checkbox);
+    filterItem.appendChild(label);
+    libraryFilterSection.appendChild(filterItem);
+  });
+  
+  filterContainer.appendChild(libraryFilterSection);
   
   // Initialize the visualization
   init();

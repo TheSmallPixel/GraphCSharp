@@ -128,6 +128,14 @@ namespace CodeAnalysisTool
             // Store location information
             _nodeLocations[_currentClass] = GetNodeLocation(node);
             
+            // Check if this is a likely entry point class (Program, Startup, etc.)
+            bool isEntryPoint = IsLikelyEntryPointClass(node);
+            if (isEntryPoint)
+            {
+                // Mark entry point classes as used
+                _usedClasses.Add(_currentClass);
+            }
+            
             // Process base classes/interfaces
             // Note: Base types include both base classes and interfaces
             if (node.BaseList != null)
@@ -150,6 +158,46 @@ namespace CodeAnalysisTool
         }
 
         /// <summary>
+        /// Determines if a class is likely to be an entry point based on name and structure
+        /// </summary>
+        private bool IsLikelyEntryPointClass(ClassDeclarationSyntax node)
+        {
+            // Check class name patterns that are common for entry points
+            string className = node.Identifier.Text;
+            if (className == "Program" || className == "Startup" || 
+                className == "Application" || className.EndsWith("Application") ||
+                className.EndsWith("App") || className == "Main")
+            {
+                // Further verify by looking for Main method or Program.cs file
+                foreach (var member in node.Members)
+                {
+                    if (member is MethodDeclarationSyntax method)
+                    {
+                        string methodName = method.Identifier.Text;
+                        
+                        // Common entry point method names
+                        if (methodName == "Main" || methodName == "Run" || 
+                            methodName == "Start" || methodName == "Initialize")
+                        {
+                            return true;
+                        }
+                    }
+                }
+                
+                // Check if this is in a file that sounds like an entry point
+                if (_currentFilePath.EndsWith("Program.cs") || 
+                    _currentFilePath.EndsWith("Application.cs") ||
+                    _currentFilePath.EndsWith("Startup.cs") ||
+                    _currentFilePath.EndsWith("Main.cs"))
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        /// <summary>
         /// Visit "public void Bar()" method declarations. 
         /// We record "Namespace.Class.Method" as a full name.
         /// </summary>
@@ -163,6 +211,14 @@ namespace CodeAnalysisTool
                 // Store location information
                 _nodeLocations[_currentMethod] = GetNodeLocation(node);
                 
+                // Check if this is an entry point method like Main or a controller action
+                bool isEntryPointMethod = IsLikelyEntryPointMethod(node);
+                if (isEntryPointMethod)
+                {
+                    // Mark entry point methods as used
+                    _usedMethods.Add(_currentMethod);
+                }
+                
                 base.VisitMethodDeclaration(node);
                 
                 _currentMethod = null;
@@ -172,6 +228,42 @@ namespace CodeAnalysisTool
                 // Orphaned method (not in a class)
                 base.VisitMethodDeclaration(node);
             }
+        }
+        
+        /// <summary>
+        /// Determines if a method is likely to be an entry point or important method
+        /// </summary>
+        private bool IsLikelyEntryPointMethod(MethodDeclarationSyntax node)
+        {
+            string methodName = node.Identifier.Text;
+            
+            // Check for common entry point method names
+            if (methodName == "Main" || methodName == "Run" || 
+                methodName == "Start" || methodName == "Initialize")
+            {
+                return true;
+            }
+            
+            // Check for ASP.NET controller action methods (public and with attributes)
+            if (node.Modifiers.Any(m => m.ValueText == "public") && 
+                node.AttributeLists.Count > 0)
+            {
+                foreach (var attrList in node.AttributeLists)
+                {
+                    foreach (var attr in attrList.Attributes)
+                    {
+                        string attrName = attr.Name.ToString();
+                        if (attrName.EndsWith("Action") || attrName.EndsWith("Filter") ||
+                            attrName.Contains("Http") || attrName.EndsWith("Route"))
+                        {
+                            // This is likely a controller action method
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            return false;
         }
 
         public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
@@ -499,24 +591,148 @@ namespace CodeAnalysisTool
         }
 
         /// <summary>
+        /// Determine if a node is from an external library
+        /// </summary>
+        private bool IsExternalLibrary(string fullName)
+        {
+            // Check if this is a known external namespace
+            string[] externalPrefixes = new string[]
+            {
+                "System.",
+                "Microsoft.",
+                "Newtonsoft.",
+                "NuGet.",
+                "AutoMapper.",
+                "EntityFramework",
+                "Serilog.",
+                "AWS.",
+                "Amazon.",
+                "Google.",
+                "Azure."
+                // Add more common libraries as needed
+            };
+            
+            return externalPrefixes.Any(prefix => fullName.StartsWith(prefix));
+        }
+
+        /// <summary>
         /// Generates the final D3 graph with all nodes and links
         /// </summary>
         public D3Graph GetGraph()
         {
-            // Create a D3 force graph
-            var graph = new D3Graph();
+            // Create a graph with all our collected information
+            D3Graph graph = new D3Graph
+            {
+                Nodes = new List<D3Node>(),
+                Links = new List<D3Link>()
+            };
             
-            // Track external nodes we need to create
-            var externalNodes = new HashSet<string>();
+            // Build namespace nodes
+            foreach (var ns in _namespaceNames.Distinct())
+            {
+                var used = _usedNamespaces.Contains(ns);
+                
+                // If the namespace matches some known patterns, mark it as external
+                bool isExternal = IsExternalLibrary(ns);
+                
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = ns,
+                    Group = "namespace",
+                    Label = ns.Split('.').Last(),
+                    Used = used,
+                    IsExternal = isExternal,
+                    // Location info for namespaces isn't tracked currently
+                });
+            }
             
-            // First pass: collect all external references that need nodes
+            // Add class nodes
+            foreach (var cls in _classNames.Distinct())
+            {
+                bool isExternal = IsExternalLibrary(cls);
+                
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = cls,
+                    Group = "class",
+                    Label = cls.Split('.').Last(),
+                    Used = _usedClasses.Contains(cls),
+                    IsExternal = isExternal,
+                    FilePath = GetFilePath(cls),
+                    LineNumber = GetLineNumber(cls)
+                });
+            }
+            
+            // Add method nodes
+            foreach (var method in _methodFullNames.Distinct())
+            {
+                bool isExternal = IsExternalLibrary(method);
+                
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = method,
+                    Group = "method",
+                    Label = method.Split('.').Last(),
+                    Used = _usedMethods.Contains(method),
+                    IsExternal = isExternal,
+                    FilePath = GetFilePath(method),
+                    LineNumber = GetLineNumber(method)
+                });
+            }
+            
+            // Add property nodes
+            foreach (var property in _propertyFullNames.Distinct())
+            {
+                bool isExternal = IsExternalLibrary(property);
+                
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = property,
+                    Group = "property",
+                    Label = property.Split('.').Last(),
+                    Used = _usedProperties.Contains(property),
+                    Type = GetPropertyType(property),
+                    IsExternal = isExternal,
+                    FilePath = GetFilePath(property),
+                    LineNumber = GetLineNumber(property)
+                });
+            }
+            
+            // Add variable nodes
+            foreach (var variable in _variableFullNames)
+            {
+                bool isExternal = IsExternalLibrary(variable);
+                
+                graph.Nodes.Add(new D3Node
+                {
+                    Id = variable,
+                    Group = "variable",
+                    Label = variable.Split('.').Last(),
+                    Used = _usedVariables.Contains(variable),
+                    Type = GetVariableType(variable),
+                    IsExternal = isExternal,
+                    FilePath = GetFilePath(variable),
+                    LineNumber = GetLineNumber(variable)
+                });
+            }
+            
+            // Add external nodes for references that would be dangling otherwise
             foreach (var kvp in _methodCallMap)
             {
                 foreach (var callee in kvp.Value)
                 {
                     if (!_methodFullNames.Contains(callee))
                     {
-                        externalNodes.Add(callee);
+                        bool isExternal = IsExternalLibrary(callee);
+                        
+                        graph.Nodes.Add(new D3Node
+                        {
+                            Id = callee,
+                            Group = "external-method",
+                            Label = callee.Split('.').Last(),
+                            Used = true, // External nodes are always "used" since they're referenced
+                            IsExternal = isExternal
+                        });
                     }
                 }
             }
@@ -527,232 +743,18 @@ namespace CodeAnalysisTool
                 {
                     if (!_propertyFullNames.Contains(property))
                     {
-                        externalNodes.Add(property);
-                    }
-                }
-            }
-            
-            // Mark the CodeGraphWalker class itself as used since it's our entry point
-            if (_classNames.Contains("CodeAnalysisTool.CodeGraphWalker"))
-            {
-                _usedClasses.Add("CodeAnalysisTool.CodeGraphWalker");
-            }
-                
-            // Mark the GetGraph method as used since it's called externally
-            if (_methodFullNames.Contains("CodeAnalysisTool.CodeGraphWalker.GetGraph"))
-            {
-                _usedMethods.Add("CodeAnalysisTool.CodeGraphWalker.GetGraph");
-            }
-                
-            // Mark the Program class as used since it contains Main
-            if (_classNames.Contains("CodeAnalysisTool.Program"))
-            {
-                _usedClasses.Add("CodeAnalysisTool.Program");
-            }
-                
-            // Mark Main as used (entry point)
-            if (_methodFullNames.Contains("CodeAnalysisTool.Program.Main"))
-            {
-                _usedMethods.Add("CodeAnalysisTool.Program.Main");
-            }
-            
-            // Process all method calls to mark both caller and callee as used
-            foreach (var kvp in _methodCallMap)
-            {
-                if (_methodFullNames.Contains(kvp.Key))
-                {
-                    foreach (var callee in kvp.Value)
-                    {
-                        if (_methodFullNames.Contains(callee))
+                        bool isExternal = IsExternalLibrary(property);
+                        
+                        graph.Nodes.Add(new D3Node
                         {
-                            _usedMethods.Add(callee);
-                        }
+                            Id = property,
+                            Group = "external-property",
+                            Label = property.Split('.').Last(),
+                            Used = true, // External nodes are always "used" since they're referenced
+                            IsExternal = isExternal
+                        });
                     }
                 }
-            }
-            
-            // Process all property access to mark properties as used
-            foreach (var kvp in _methodPropertyMap)
-            {
-                foreach (var property in kvp.Value)
-                {
-                    if (_propertyFullNames.Contains(property))
-                    {
-                        _usedProperties.Add(property);
-                    }
-                }
-            }
-            
-            // Mark classes that contain used methods or properties as used
-            foreach (var method in _usedMethods)
-            {
-                int idx = method.LastIndexOf('.');
-                if (idx > 0)
-                {
-                    var className = method.Substring(0, idx);
-                    if (_classNames.Contains(className))
-                    {
-                        _usedClasses.Add(className);
-                    }
-                }
-            }
-            
-            foreach (var property in _usedProperties)
-            {
-                int idx = property.LastIndexOf('.');
-                if (idx > 0)
-                {
-                    var className = property.Substring(0, idx);
-                    if (_classNames.Contains(className))
-                    {
-                        _usedClasses.Add(className);
-                    }
-                }
-            }
-            
-            // Mark the D3Graph, D3Node, and D3Link classes as used - they're essential types
-            foreach (var className in _classNames)
-            {
-                if (className == "CodeAnalysisTool.D3Graph" || 
-                    className == "CodeAnalysisTool.D3Node" || 
-                    className == "CodeAnalysisTool.D3Link")
-                {
-                    _usedClasses.Add(className);
-                }
-            }
-            
-            // Special case for our test class
-            if (_methodFullNames.Contains("CodeAnalysisTool.UnusedElementsTest.TestMethod"))
-            {
-                _usedMethods.Add("CodeAnalysisTool.UnusedElementsTest.TestMethod");
-                _usedMethods.Add("CodeAnalysisTool.UnusedElementsTest.UsedMethod");
-                _usedProperties.Add("CodeAnalysisTool.UnusedElementsTest.UsedProperty");
-                _usedClasses.Add("CodeAnalysisTool.UnusedElementsTest");
-                
-                // Simulate method calls that would normally be detected from invocation
-                if (!_methodCallMap.ContainsKey("CodeAnalysisTool.UnusedElementsTest.TestMethod"))
-                {
-                    _methodCallMap["CodeAnalysisTool.UnusedElementsTest.TestMethod"] = new List<string>();
-                }
-                _methodCallMap["CodeAnalysisTool.UnusedElementsTest.TestMethod"].Add("CodeAnalysisTool.UnusedElementsTest.UsedMethod");
-                
-                // Simulate property access that would normally be detected
-                if (!_methodPropertyMap.ContainsKey("CodeAnalysisTool.UnusedElementsTest.UsedMethod"))
-                {
-                    _methodPropertyMap["CodeAnalysisTool.UnusedElementsTest.UsedMethod"] = new List<string>();
-                }
-                _methodPropertyMap["CodeAnalysisTool.UnusedElementsTest.UsedMethod"].Add("CodeAnalysisTool.UnusedElementsTest.UsedProperty");
-            }
-
-            // 1) Add namespace nodes
-            foreach (var ns in _namespaceNames)
-            {
-                graph.Nodes.Add(new D3Node
-                {
-                    Id = ns,
-                    Group = "namespace",
-                    Label = ns,
-                    Used = true // Namespaces are always "used"
-                });
-            }
-            
-            // 2) Add class nodes
-            foreach (var cls in _classNames)
-            {
-                graph.Nodes.Add(new D3Node
-                {
-                    Id = cls,
-                    Group = "class",
-                    Label = cls.Split('.').Last(),
-                    Used = _usedClasses.Contains(cls),
-                    FilePath = _nodeLocations.ContainsKey(cls) ? _nodeLocations[cls].FilePath : "",
-                    LineNumber = _nodeLocations.ContainsKey(cls) ? _nodeLocations[cls].LineNumber : 0
-                });
-            }
-            
-            // 3) Add method nodes
-            foreach (var method in _methodFullNames)
-            {
-                graph.Nodes.Add(new D3Node
-                {
-                    Id = method,
-                    Group = "method",
-                    Label = method.Split('.').Last(),
-                    Used = _usedMethods.Contains(method),
-                    FilePath = _nodeLocations.ContainsKey(method) ? _nodeLocations[method].FilePath : "",
-                    LineNumber = _nodeLocations.ContainsKey(method) ? _nodeLocations[method].LineNumber : 0
-                });
-            }
-            
-            // Add property nodes
-            foreach (var prop in _propertyFullNames)
-            {
-                // Try to get type info for this property
-                string typeInfo = "Unknown";
-                if (_variableTypeMap.ContainsKey(prop))
-                {
-                    typeInfo = _variableTypeMap[prop];
-                }
-                
-                graph.Nodes.Add(new D3Node
-                {
-                    Id = prop,
-                    Group = "property",
-                    Label = prop.Split('.').Last(),
-                    Used = _usedProperties.Contains(prop),
-                    Type = typeInfo,
-                    FilePath = _nodeLocations.ContainsKey(prop) ? _nodeLocations[prop].FilePath : "",
-                    LineNumber = _nodeLocations.ContainsKey(prop) ? _nodeLocations[prop].LineNumber : 0
-                });
-            }
-            
-            // Add variable nodes
-            foreach (var variable in _variableFullNames)
-            {
-                // Try to get type info for this variable
-                string typeInfo = "Unknown";
-                if (_variableTypeMap.ContainsKey(variable))
-                {
-                    typeInfo = _variableTypeMap[variable];
-                }
-                
-                graph.Nodes.Add(new D3Node
-                {
-                    Id = variable,
-                    Group = "variable",
-                    Label = variable.Split('.').Last(),
-                    Used = _usedVariables.Contains(variable),
-                    Type = typeInfo,
-                    FilePath = _nodeLocations.ContainsKey(variable) ? _nodeLocations[variable].FilePath : "",
-                    LineNumber = _nodeLocations.ContainsKey(variable) ? _nodeLocations[variable].LineNumber : 0
-                });
-            }
-            
-            // Add external nodes for references that would be dangling otherwise
-            foreach (var externalNode in externalNodes)
-            {
-                string group = "external";
-                if (externalNode.EndsWith("()"))
-                {
-                    group = "external-method";
-                }
-                else
-                {
-                    // Check if it looks like a property
-                    var lastPart = externalNode.Split('.').Last();
-                    if (char.IsUpper(lastPart[0]))
-                    {
-                        group = "external-property";
-                    }
-                }
-                
-                graph.Nodes.Add(new D3Node
-                {
-                    Id = externalNode,
-                    Group = group,
-                    Label = externalNode.Split('.').Last(),
-                    Used = true // External nodes are always "used" since they're referenced
-                });
             }
 
             // 4) Links:
@@ -893,6 +895,54 @@ namespace CodeAnalysisTool
             return graph.Nodes.Any(n => n.Id == nodeId);
         }
 
+        /// <summary>
+        /// Get the file path for a node if available
+        /// </summary>
+        private string GetFilePath(string nodeId)
+        {
+            if (_nodeLocations.ContainsKey(nodeId))
+            {
+                return _nodeLocations[nodeId].FilePath;
+            }
+            return "";
+        }
+        
+        /// <summary>
+        /// Get the line number for a node if available
+        /// </summary>
+        private int GetLineNumber(string nodeId)
+        {
+            if (_nodeLocations.ContainsKey(nodeId))
+            {
+                return _nodeLocations[nodeId].LineNumber;
+            }
+            return 0;
+        }
+        
+        /// <summary>
+        /// Get the type for a property if available
+        /// </summary>
+        private string GetPropertyType(string propertyId)
+        {
+            if (_variableTypeMap.ContainsKey(propertyId))
+            {
+                return _variableTypeMap[propertyId];
+            }
+            return "Unknown";
+        }
+        
+        /// <summary>
+        /// Get the type for a variable if available
+        /// </summary>
+        private string GetVariableType(string variableId)
+        {
+            if (_variableTypeMap.ContainsKey(variableId))
+            {
+                return _variableTypeMap[variableId];
+            }
+            return "Unknown";
+        }
+
         // Helpers for building full names from symbols
         private string BuildFullTypeName(ITypeSymbol typeSymbol)
         {
@@ -954,6 +1004,7 @@ namespace CodeAnalysisTool
         public string Type { get; set; } // e.g. 'int', 'string', 'MyCustomClass'
         public string FilePath { get; set; } // File path where this element is defined
         public int LineNumber { get; set; } // Line number in the file where this element is defined
+        public bool IsExternal { get; set; } = false; // Indicates if this node is from an external library
     }
 
     public class D3Link
