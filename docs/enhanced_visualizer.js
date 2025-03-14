@@ -323,59 +323,48 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(applyFilters, 100);
   }
   
-  // Function to get node color
+  // Get node color based on its type and status
   function getNodeColor(d) {
-    // First determine the base color by node type
-    let baseColor;
+    // If node is not used, return unused color
+    if (d.used === false) {
+      return getComputedStyle(document.documentElement).getPropertyValue('--unused-color');
+    }
     
+    // External nodes get the external color
+    if (d.isexternal === true) {
+      return getComputedStyle(document.documentElement).getPropertyValue('--external-color');
+    }
+    
+    // Return color based on node type
     switch (d.group) {
       case 'namespace':
-        baseColor = '#7b3294';
-        break;
+        return getComputedStyle(document.documentElement).getPropertyValue('--namespace-color');
       case 'class':
-        baseColor = '#008837';
-        break;
+        return getComputedStyle(document.documentElement).getPropertyValue('--class-color');
       case 'interface':
-        baseColor = '#5e3c99';
-        break;
+        return getComputedStyle(document.documentElement).getPropertyValue('--type-color');
       case 'method':
-        baseColor = '#e66101';
-        break;
+        return getComputedStyle(document.documentElement).getPropertyValue('--method-color');
       case 'property':
-        baseColor = '#fdb863';
-        break;
+        return getComputedStyle(document.documentElement).getPropertyValue('--property-color');
       case 'variable':
-        baseColor = '#b2abd2';
-        break;
+        return getComputedStyle(document.documentElement).getPropertyValue('--variable-color');
       default:
-        baseColor = '#878787';
+        return '#999';
     }
-    
-    // Adjust color based on usage status
-    if (d.used === false) {
-      // Unused nodes appear faded/lighter
-      return d3.color(baseColor).brighter(1).toString();
-    }
-    
-    // External nodes get a different visual treatment
-    if (d.isexternal === true) {
-      return d3.color(baseColor).darker(0.5).toString();
-    }
-    
-    return baseColor;
   }
   
-  // Function to get link color
+  // Get link color based on its type
   function getLinkColor(d) {
     switch (d.type) {
       case 'containment':
-        return '#999';
+        return getComputedStyle(document.documentElement).getPropertyValue('--link-color');
       case 'call':
         return '#555';
       case 'reference':
         return 'blue';
       case 'external':
-        return '#a64d79';
+        return getComputedStyle(document.documentElement).getPropertyValue('--external-color');
       default:
         return '#ccc';
     }
@@ -921,6 +910,145 @@ document.addEventListener('DOMContentLoaded', function() {
     loadingOverlay.style.display = 'none';
   }
   
+  // Show node information in the detail panel
+  function showNodeDetails(node) {
+    console.log("Showing details for node:", node);
+    
+    // Get detail panel elements
+    const detailPanel = document.getElementById('detail-panel');
+    const detailTitle = document.getElementById('detail-title');
+    const detailContent = document.getElementById('detail-content');
+    
+    if (!detailPanel || !detailTitle || !detailContent) {
+      console.error("Detail panel elements not found");
+      return;
+    }
+    
+    // Show detail panel
+    detailPanel.classList.add('visible');
+    
+    // Set node title
+    detailTitle.textContent = node.label || node.name || node.id.split('.').pop();
+    
+    // Clear previous content
+    detailContent.innerHTML = '';
+    
+    // Add node information
+    const nodeInfo = document.createElement('div');
+    nodeInfo.className = 'node-info';
+    
+    // Node type
+    const typeInfo = document.createElement('div');
+    typeInfo.className = 'info-item';
+    typeInfo.innerHTML = `<span class="info-label">Type:</span> <span class="info-value">${node.group}</span>`;
+    nodeInfo.appendChild(typeInfo);
+    
+    // Full name/path
+    const nameInfo = document.createElement('div');
+    nameInfo.className = 'info-item';
+    nameInfo.innerHTML = `<span class="info-label">Full Path:</span> <span class="info-value">${node.id}</span>`;
+    nodeInfo.appendChild(nameInfo);
+    
+    // Usage status
+    const usageInfo = document.createElement('div');
+    usageInfo.className = 'info-item';
+    usageInfo.innerHTML = `<span class="info-label">Used:</span> <span class="info-value ${node.used ? 'used' : 'unused'}">${node.used ? 'Yes' : 'No'}</span>`;
+    nodeInfo.appendChild(usageInfo);
+    
+    // Origin
+    const originInfo = document.createElement('div');
+    originInfo.className = 'info-item';
+    originInfo.innerHTML = `<span class="info-label">Origin:</span> <span class="info-value">${node.isexternal ? 'External Library' : 'Internal'}</span>`;
+    nodeInfo.appendChild(originInfo);
+    
+    detailContent.appendChild(nodeInfo);
+    
+    // Add section for related nodes
+    const relatedTitle = document.createElement('h3');
+    relatedTitle.textContent = 'Related Nodes';
+    detailContent.appendChild(relatedTitle);
+    
+    // Find connected nodes
+    const connected = findConnectedNodes(node.id);
+    
+    if (connected.length > 0) {
+      const connectedList = document.createElement('ul');
+      connectedList.className = 'connected-list';
+      
+      connected.forEach(conn => {
+        const connNode = graph.nodes.find(n => n.id === conn.id);
+        if (connNode) {
+          const listItem = document.createElement('li');
+          listItem.className = 'connected-item';
+          
+          const relationType = document.createElement('span');
+          relationType.className = 'relation-type';
+          relationType.textContent = conn.type;
+          
+          const relationDirection = document.createElement('span');
+          relationDirection.className = 'relation-direction';
+          relationDirection.textContent = conn.direction === 'source' ? ' → ' : ' ← ';
+          
+          const nodeName = document.createElement('span');
+          nodeName.className = 'node-name';
+          nodeName.textContent = connNode.label || connNode.name || connNode.id.split('.').pop();
+          
+          // Make the connection clickable to navigate to that node
+          listItem.appendChild(relationType);
+          listItem.appendChild(relationDirection);
+          listItem.appendChild(nodeName);
+          
+          listItem.addEventListener('click', () => {
+            // Find and click the connected node in the visualization
+            const connectedNodeElement = gContainer.select(`.node[data-id="${connNode.id}"]`).node();
+            if (connectedNodeElement) {
+              nodeClicked({ currentTarget: connectedNodeElement }, connNode);
+            }
+          });
+          
+          connectedList.appendChild(listItem);
+        }
+      });
+      
+      detailContent.appendChild(connectedList);
+    } else {
+      const noConnections = document.createElement('p');
+      noConnections.textContent = 'No related nodes found.';
+      detailContent.appendChild(noConnections);
+    }
+  }
+  
+  // Find connected nodes (both incoming and outgoing)
+  function findConnectedNodes(nodeId) {
+    const connected = [];
+    
+    // Check all links
+    gContainer.selectAll('.link').each(function(d) {
+      const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+      const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+      
+      // If this node is the source
+      if (sourceId === nodeId) {
+        connected.push({
+          id: targetId,
+          type: d.type,
+          direction: 'source' // This node is the source
+        });
+      }
+      
+      // If this node is the target
+      if (targetId === nodeId) {
+        connected.push({
+          id: sourceId,
+          type: d.type,
+          direction: 'target' // This node is the target
+        });
+      }
+    });
+    
+    return connected;
+  }
+  
   // Handle node click event
   function nodeClicked(event, d) {
     console.log("Node clicked:", d.id, d.group);
@@ -988,113 +1116,6 @@ document.addEventListener('DOMContentLoaded', function() {
     d3.select(event.currentTarget).classed('hover', false);
   }
   
-  // Show detailed information about a node
-  function showNodeDetails(node) {
-    console.log("Showing details for node:", node.id);
-    
-    const detailTitle = document.getElementById('detail-title');
-    const detailContent = document.getElementById('detail-content');
-    
-    if (!detailTitle || !detailContent) {
-      console.error("Detail panel elements not found");
-      return;
-    }
-    
-    // Set node title
-    detailTitle.textContent = node.label || node.name || node.id.split('.').pop();
-    
-    // Clear previous content
-    detailContent.innerHTML = '';
-    
-    // Create basic info section
-    const infoSection = document.createElement('div');
-    infoSection.className = 'detail-section';
-    
-    // Add node type
-    const typeEl = document.createElement('p');
-    typeEl.innerHTML = `<strong>Type:</strong> ${node.group.charAt(0).toUpperCase() + node.group.slice(1)}`;
-    infoSection.appendChild(typeEl);
-    
-    // Add full name/id
-    const idEl = document.createElement('p');
-    idEl.innerHTML = `<strong>Full Name:</strong> ${node.id}`;
-    infoSection.appendChild(idEl);
-    
-    // Add usage status
-    const usageEl = document.createElement('p');
-    usageEl.innerHTML = `<strong>Usage Status:</strong> <span class="${node.used ? 'used' : 'unused'}">${node.used ? 'Used' : 'Unused'}</span>`;
-    infoSection.appendChild(usageEl);
-    
-    // Add origin information
-    const originEl = document.createElement('p');
-    originEl.innerHTML = `<strong>Origin:</strong> <span class="${node.isexternal ? 'external' : 'internal'}">${node.isexternal ? 'External Library' : 'Internal Code'}</span>`;
-    infoSection.appendChild(originEl);
-    
-    // Add to detail content
-    detailContent.appendChild(infoSection);
-    
-    // Connections section for related nodes
-    const connectionsSection = document.createElement('div');
-    connectionsSection.className = 'detail-section';
-    connectionsSection.innerHTML = '<h3>Connections</h3>';
-    
-    // Get connected nodes
-    const connections = [];
-    gContainer.selectAll('.link').each(function(d) {
-      const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
-      const targetId = typeof d.target === 'object' ? d.target.id : d.target;
-      
-      if (sourceId === node.id) {
-        connections.push({
-          id: targetId,
-          direction: 'outgoing',
-          type: d.type
-        });
-      } else if (targetId === node.id) {
-        connections.push({
-          id: sourceId,
-          direction: 'incoming',
-          type: d.type
-        });
-      }
-    });
-    
-    // If we have connections, display them
-    if (connections.length > 0) {
-      const connectionsList = document.createElement('ul');
-      connectionsList.className = 'connections-list';
-      
-      connections.forEach(conn => {
-        const connNode = graph.nodes.find(n => n.id === conn.id);
-        if (connNode) {
-          const listItem = document.createElement('li');
-          listItem.className = `connection ${conn.direction} ${conn.type}`;
-          listItem.innerHTML = `
-            <span class="connection-type">${conn.type}</span>
-            <span class="connection-direction">${conn.direction === 'incoming' ? 'from' : 'to'}</span>
-            <span class="connection-name">${connNode.label || connNode.name || connNode.id.split('.').pop()}</span>
-            <span class="connection-group">(${connNode.group})</span>
-          `;
-          
-          // Make the connection clickable
-          listItem.addEventListener('click', () => {
-            nodeClicked({ currentTarget: gContainer.select(`.node[data-id="${connNode.id}"]`).node() }, connNode);
-          });
-          
-          connectionsList.appendChild(listItem);
-        }
-      });
-      
-      connectionsSection.appendChild(connectionsList);
-    } else {
-      connectionsSection.innerHTML += '<p>No connections found for this node.</p>';
-    }
-    
-    detailContent.appendChild(connectionsSection);
-    
-    console.log("Node details displayed");
-  }
-  
   // Add CSS styles for proper visualization
   function addStyles() {
     const styleElement = document.createElement('style');
@@ -1121,6 +1142,7 @@ document.addEventListener('DOMContentLoaded', function() {
         font-size: 10px;
         pointer-events: none;
         text-shadow: 0 1px 0 #000, 1px 0 0 #000, 0 -1px 0 #000, -1px 0 0 #000;
+        fill: white;
       }
       
       /* Link styling */
@@ -1152,51 +1174,65 @@ document.addEventListener('DOMContentLoaded', function() {
         stroke-opacity: 1;
       }
       
-      /* Detail panel styling */
-      .detail-section {
+      /* Detail panel additional styling */
+      .node-info {
         margin-bottom: 20px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        background: #f8f8f8;
       }
       
-      .connection {
-        cursor: pointer;
+      .info-item {
+        margin: 5px 0;
+        display: flex;
+        align-items: center;
+      }
+      
+      .info-label {
+        font-weight: bold;
+        width: 80px;
+        color: #555;
+      }
+      
+      .info-value {
+        flex: 1;
+      }
+      
+      .connected-list {
+        list-style: none;
+        padding: 0;
+      }
+      
+      .connected-item {
         padding: 8px;
         margin: 5px 0;
         border-radius: 4px;
         background: #f5f5f5;
+        cursor: pointer;
+        transition: background 0.2s;
       }
       
-      .connection:hover {
+      .connected-item:hover {
         background: #e0e0e0;
       }
       
-      .connection-type {
+      .relation-type {
         font-weight: bold;
         margin-right: 5px;
+        color: #666;
       }
       
-      .connection-name {
+      .node-name {
         color: #333;
       }
       
       .used {
-        color: green;
+        color: var(--used-color);
       }
       
       .unused {
-        color: red;
-      }
-      
-      .internal {
-        color: blue;
-      }
-      
-      .external {
-        color: purple;
-      }
-      
-      .connections-list {
-        list-style: none;
-        padding: 0;
+        color: var(--unused-color);
       }
     `;
     
