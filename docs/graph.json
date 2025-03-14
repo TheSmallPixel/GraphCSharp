@@ -31,6 +31,12 @@
       "used": false
     },
     {
+      "id": "CodeAnalysisTool.UnusedElementsTest",
+      "group": "class",
+      "label": "UnusedElementsTest",
+      "used": true
+    },
+    {
       "id": "CodeAnalysisTool.Program",
       "group": "class",
       "label": "Program",
@@ -127,6 +133,24 @@
       "used": false
     },
     {
+      "id": "CodeAnalysisTool.UnusedElementsTest.UnusedMethod",
+      "group": "method",
+      "label": "UnusedMethod",
+      "used": false
+    },
+    {
+      "id": "CodeAnalysisTool.UnusedElementsTest.UsedMethod",
+      "group": "method",
+      "label": "UsedMethod",
+      "used": true
+    },
+    {
+      "id": "CodeAnalysisTool.UnusedElementsTest.TestMethod",
+      "group": "method",
+      "label": "TestMethod",
+      "used": true
+    },
+    {
       "id": "CodeAnalysisTool.Program.Main",
       "group": "method",
       "label": "Main",
@@ -203,6 +227,18 @@
       "group": "property",
       "label": "Type",
       "used": false
+    },
+    {
+      "id": "CodeAnalysisTool.UnusedElementsTest.UnusedProperty",
+      "group": "property",
+      "label": "UnusedProperty",
+      "used": false
+    },
+    {
+      "id": "CodeAnalysisTool.UnusedElementsTest.UsedProperty",
+      "group": "property",
+      "label": "UsedProperty",
+      "used": true
     },
     {
       "id": "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxWalker.Visit",
@@ -708,6 +744,11 @@
     },
     {
       "source": "CodeAnalysisTool",
+      "target": "CodeAnalysisTool.UnusedElementsTest",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool",
       "target": "CodeAnalysisTool.Program",
       "type": "containment"
     },
@@ -787,6 +828,21 @@
       "type": "containment"
     },
     {
+      "source": "CodeAnalysisTool.UnusedElementsTest",
+      "target": "CodeAnalysisTool.UnusedElementsTest.UnusedMethod",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.UnusedElementsTest",
+      "target": "CodeAnalysisTool.UnusedElementsTest.UsedMethod",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.UnusedElementsTest",
+      "target": "CodeAnalysisTool.UnusedElementsTest.TestMethod",
+      "type": "containment"
+    },
+    {
       "source": "CodeAnalysisTool.Program",
       "target": "CodeAnalysisTool.Program.Main",
       "type": "containment"
@@ -849,6 +905,16 @@
     {
       "source": "CodeAnalysisTool.D3Link",
       "target": "CodeAnalysisTool.D3Link.Type",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.UnusedElementsTest",
+      "target": "CodeAnalysisTool.UnusedElementsTest.UnusedProperty",
+      "type": "containment"
+    },
+    {
+      "source": "CodeAnalysisTool.UnusedElementsTest",
+      "target": "CodeAnalysisTool.UnusedElementsTest.UsedProperty",
       "type": "containment"
     },
     {
@@ -1072,6 +1138,11 @@
       "type": "reference"
     },
     {
+      "source": "CodeAnalysisTool.UnusedElementsTest.UsedMethod",
+      "target": "CodeAnalysisTool.UnusedElementsTest.UsedProperty",
+      "type": "reference"
+    },
+    {
       "source": "CodeAnalysisTool.Program.Main",
       "target": "System.Array.Length",
       "type": "external"
@@ -1169,6 +1240,11 @@
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
       "target": "System.String.IsNullOrEmpty",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.VisitClassDeclaration",
+      "target": "System.Collections.Generic.HashSet.Add",
       "type": "external"
     },
     {
@@ -1498,6 +1574,46 @@
     },
     {
       "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Contains",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.HashSet.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.Dictionary.ContainsKey",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.List.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.Dictionary.ContainsKey",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
+      "target": "System.Collections.Generic.List.Add",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.CodeGraphWalker.GetGraph",
       "target": "System.Collections.Generic.List.Add",
       "type": "external"
     },
@@ -1700,6 +1816,26 @@
       "source": "CodeAnalysisTool.CodeGraphWalker.NodeExists",
       "target": "System.Linq.Enumerable.Any",
       "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.UnusedElementsTest.UnusedMethod",
+      "target": "System.Console.WriteLine",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.UnusedElementsTest.UsedMethod",
+      "target": "System.Console.WriteLine",
+      "type": "external"
+    },
+    {
+      "source": "CodeAnalysisTool.UnusedElementsTest.TestMethod",
+      "target": "CodeAnalysisTool.UnusedElementsTest.UsedMethod",
+      "type": "call"
+    },
+    {
+      "source": "CodeAnalysisTool.UnusedElementsTest.TestMethod",
+      "target": "CodeAnalysisTool.UnusedElementsTest.UsedMethod",
+      "type": "call"
     },
     {
       "source": "CodeAnalysisTool.Program.Main",
