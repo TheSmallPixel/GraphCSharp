@@ -496,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Highlight connections for a selected node
-  function highlightConnections(node) {
+  function highlightNodeConnections(nodeId) {
     // Reset previous highlights
     resetHighlights();
     
@@ -505,12 +505,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add the links that go to or from the selected node
     graph.links.forEach(link => {
-      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+      const sourceId = link.source.id || link.source;
+      const targetId = link.target.id || link.target;
       
-      if (sourceId === node.id) {
+      if (sourceId === nodeId) {
         connectedNodeIds.add(targetId);
-      } else if (targetId === node.id) {
+      } else if (targetId === nodeId) {
         connectedNodeIds.add(sourceId);
       }
     });
@@ -520,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
     gContainer.selectAll('.link').classed('faded', true);
     
     // Highlight the selected node and its connections
-    gContainer.select(`.node[data-id="${node.id}"]`).classed('faded', false).classed('highlighted', true);
+    gContainer.select(`.node[data-id="${nodeId}"]`).classed('faded', false).classed('highlighted', true);
     
     // Highlight connected nodes
     connectedNodeIds.forEach(id => {
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
       const targetId = typeof d.target === 'object' ? d.target.id : d.target;
       
-      if (sourceId === node.id || targetId === node.id) {
+      if (sourceId === nodeId || targetId === nodeId) {
         d3.select(this).classed('faded', false).classed('highlighted', true);
       }
     });
@@ -559,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tooltip-used').textContent = d.used === false ? 'No' : 'Yes';
     
     // Highlight connected links and nodes
-    highlightConnections(d.id);
+    highlightNodeConnections(d.id);
   }
   
   // Handle node mouse out event
@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
     selectedNode = d;
     
     // Highlight connected nodes
-    highlightConnections(d);
+    highlightNodeConnections(d);
     
     // Show node details panel
     showNodeDetails(d);
@@ -683,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (clickedNode) {
               selectedNode = clickedNode.id;
               showNodeDetails(clickedNode);
-              highlightConnections(clickedNode.id);
+              highlightNodeConnections(clickedNode.id);
               
               // Focus the node in the visualization
               focusNode(clickedNode);
@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (clickedNode) {
               selectedNode = clickedNode.id;
               showNodeDetails(clickedNode);
-              highlightConnections(clickedNode.id);
+              highlightNodeConnections(clickedNode.id);
               
               // Focus the node in the visualization
               focusNode(clickedNode);
@@ -769,14 +769,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Find connected nodes
     const connectedNodeIds = new Set();
-    connectedNodeIds.add(nodeId);
     
-    // Add incoming and outgoing connections
-    const refs = nodeReferences.get(nodeId);
-    if (refs) {
-      refs.incoming.forEach(ref => connectedNodeIds.add(ref.id));
-      refs.outgoing.forEach(ref => connectedNodeIds.add(ref.id));
-    }
+    // Add the links that go to or from the selected node
+    graph.links.forEach(link => {
+      const sourceId = link.source.id || link.source;
+      const targetId = link.target.id || link.target;
+      
+      if (sourceId === nodeId) {
+        connectedNodeIds.add(targetId);
+      } else if (targetId === nodeId) {
+        connectedNodeIds.add(sourceId);
+      }
+    });
     
     // Fade all nodes and links
     gContainer.selectAll('.node').classed('faded', true);
@@ -871,79 +875,137 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Setup event listeners for UI controls
   function setupEventListeners() {
+    console.log("Setting up event listeners...");
+    
     // Layout toggle
-    document.getElementById('toggle-layout').addEventListener('click', () => {
-      currentLayout = currentLayout === 'force' ? 'hierarchical' : 'force';
-      document.getElementById('toggle-layout').textContent = 
-        currentLayout === 'force' ? 'Switch to Hierarchical Layout' : 'Switch to Force Layout';
-      
-      // Update the visualization
-      updateLayout();
-    });
+    const toggleLayoutBtn = document.getElementById('toggle-layout');
+    if (toggleLayoutBtn) {
+      toggleLayoutBtn.addEventListener('click', () => {
+        currentLayout = currentLayout === 'force' ? 'hierarchical' : 'force';
+        toggleLayoutBtn.textContent = 
+          currentLayout === 'force' ? 'Switch to Hierarchical Layout' : 'Switch to Force Layout';
+        
+        // Update the visualization
+        updateLayout();
+      });
+    } else {
+      console.warn("Element #toggle-layout not found");
+    }
     
     // Highlight unused toggle
-    document.getElementById('toggle-highlight-unused').addEventListener('click', () => {
-      highlightUnused = !highlightUnused;
-      
-      // Update the visualization
-      updateNodeColors();
-    });
+    const toggleHighlightBtn = document.getElementById('toggle-highlight-unused');
+    if (toggleHighlightBtn) {
+      toggleHighlightBtn.addEventListener('click', () => {
+        highlightUnused = !highlightUnused;
+        
+        // Update the visualization
+        updateNodeColors();
+      });
+    } else {
+      console.warn("Element #toggle-highlight-unused not found");
+    }
     
     // Node type filters
-    document.querySelectorAll('.node-filter').forEach(filter => {
-      filter.addEventListener('change', () => {
-        console.log(`Node filter changed: ${filter.value} = ${filter.checked}`);
-        applyFilters();
+    const nodeFilters = document.querySelectorAll('.node-filter');
+    if (nodeFilters && nodeFilters.length > 0) {
+      nodeFilters.forEach(filter => {
+        filter.addEventListener('change', () => {
+          applyFilters();
+        });
       });
-    });
+    } else {
+      console.warn("No node filter elements found");
+    }
     
     // Usage filters
-    document.getElementById('filter-used').addEventListener('change', () => {
-      console.log(`Used filter changed: ${document.getElementById('filter-used').checked}`);
-      applyFilters();
-    });
+    const filterUsed = document.getElementById('filter-used');
+    if (filterUsed) {
+      filterUsed.addEventListener('change', applyFilters);
+    } else {
+      console.warn("Element #filter-used not found");
+    }
     
-    document.getElementById('filter-unused').addEventListener('change', () => {
-      console.log(`Unused filter changed: ${document.getElementById('filter-unused').checked}`);
-      applyFilters();
-    });
+    const filterUnused = document.getElementById('filter-unused');
+    if (filterUnused) {
+      filterUnused.addEventListener('change', applyFilters);
+    } else {
+      console.warn("Element #filter-unused not found");
+    }
     
     // Library filters
-    document.getElementById('filter-internal').addEventListener('change', () => {
-      console.log(`Internal filter changed: ${document.getElementById('filter-internal').checked}`);
-      applyFilters();
-    });
+    const filterInternal = document.getElementById('filter-internal');
+    if (filterInternal) {
+      filterInternal.addEventListener('change', applyFilters);
+    } else {
+      console.warn("Element #filter-internal not found");
+    }
     
-    document.getElementById('filter-external').addEventListener('change', () => {
-      console.log(`External filter changed: ${document.getElementById('filter-external').checked}`);
-      applyFilters();
-    });
+    const filterExternal = document.getElementById('filter-external');
+    if (filterExternal) {
+      filterExternal.addEventListener('change', applyFilters);
+    } else {
+      console.warn("Element #filter-external not found");
+    }
     
     // Search
-    document.getElementById('search').addEventListener('input', handleSearch);
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+      searchInput.addEventListener('input', handleSearch);
+    } else {
+      console.warn("Element #search not found");
+    }
     
     // Zoom controls
-    document.getElementById('zoom-in').addEventListener('click', () => {
-      svg.transition().duration(300)
-        .call(zoomBehavior.scaleBy, 1.5);
-    });
+    const zoomInBtn = document.getElementById('zoom-in');
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', () => {
+        svg.transition().duration(300)
+          .call(zoomBehavior.scaleBy, 1.5);
+      });
+    } else {
+      console.warn("Element #zoom-in not found");
+    }
     
-    document.getElementById('zoom-out').addEventListener('click', () => {
-      svg.transition().duration(300)
-        .call(zoomBehavior.scaleBy, 0.66);
-    });
+    const zoomOutBtn = document.getElementById('zoom-out');
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', () => {
+        svg.transition().duration(300)
+          .call(zoomBehavior.scaleBy, 0.66);
+      });
+    } else {
+      console.warn("Element #zoom-out not found");
+    }
     
-    document.getElementById('zoom-reset').addEventListener('click', resetZoom);
+    const zoomResetBtn = document.getElementById('zoom-reset');
+    if (zoomResetBtn) {
+      zoomResetBtn.addEventListener('click', () => {
+        svg.transition().duration(300)
+          .call(zoomBehavior.transform, d3.zoomIdentity);
+      });
+    } else {
+      console.warn("Element #zoom-reset not found");
+    }
     
     // Detail panel close button
-    document.getElementById('close-details').addEventListener('click', () => {
-      detailPanel.classList.remove('active');
-      selectedNode = null;
-      resetHighlights();
-    });
+    const closeDetailsBtn = document.getElementById('close-details');
+    if (closeDetailsBtn) {
+      closeDetailsBtn.addEventListener('click', () => {
+        detailPanel.classList.remove('active');
+        
+        // Reset selection state
+        gContainer.selectAll('.node.selected').classed('selected', false);
+        selectedNode = null;
+      });
+    } else {
+      console.warn("Element #close-details not found");
+    }
     
-    // Initial call to apply filters
-    setTimeout(applyFilters, 100); // Slight delay to ensure DOM is ready
+    // Initial filter application (only if needed DOM elements exist)
+    if (document.querySelectorAll('.node-filter').length > 0) {
+      setTimeout(applyFilters, 100); // Slight delay to ensure DOM is ready
+    }
+    
+    console.log("Event listeners setup complete");
   }
   
   // Update node colors based on current settings
@@ -974,12 +1036,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Get usage filter state
-    const showUsed = document.getElementById('filter-used').checked;
-    const showUnused = document.getElementById('filter-unused').checked;
+    const showUsed = document.getElementById('filter-used')?.checked ?? true;
+    const showUnused = document.getElementById('filter-unused')?.checked ?? true;
     
     // Get library filter state
-    const showInternal = document.getElementById('filter-internal').checked;
-    const showExternal = document.getElementById('filter-external').checked;
+    const showInternal = document.getElementById('filter-internal')?.checked ?? true;
+    const showExternal = document.getElementById('filter-external')?.checked ?? true;
     
     console.log("Filter settings:", { 
       types: selectedGroups, 
@@ -987,54 +1049,43 @@ document.addEventListener('DOMContentLoaded', function() {
       library: { showInternal, showExternal } 
     });
     
-    // Apply filters directly to the graph data nodes
-    graph.nodes.forEach(node => {
-      // Start with assuming the node is visible
-      let isVisible = true;
-      
-      // Type filter
-      if (!selectedGroups.includes(node.group)) {
-        isVisible = false;
-      }
-      
-      // Usage filter
-      if (isVisible) {
-        if (node.used && !showUsed) isVisible = false;
-        if (!node.used && !showUnused) isVisible = false;
-      }
-      
-      // Library filter
-      if (isVisible) {
-        if (node.isexternal && !showExternal) isVisible = false;
-        if (!node.isexternal && !showInternal) isVisible = false;
-      }
-      
-      // Store visibility in the node object
-      node.visible = isVisible;
-    });
-    
-    // Apply visibility to DOM elements
+    // Apply filters to node visibility
     gContainer.selectAll('.node')
-      .style('display', d => d.visible ? 'block' : 'none');
-    
-    // Update links visibility
-    gContainer.selectAll('.link')
-      .style('display', d => {
-        // Get source and target nodes
-        const source = typeof d.source === 'object' ? d.source.id : d.source;
-        const target = typeof d.target === 'object' ? d.target.id : d.target;
+      .style('display', function(d) {
+        // Type filter
+        if (selectedGroups.length > 0 && !selectedGroups.includes(d.group)) {
+          return 'none';
+        }
         
-        // Find the node objects
-        const sourceNode = graph.nodes.find(n => n.id === source);
-        const targetNode = graph.nodes.find(n => n.id === target);
+        // Usage filter
+        if ((d.used && !showUsed) || (!d.used && !showUnused)) {
+          return 'none';
+        }
         
-        // If either node is not visible, hide the link
-        if (!sourceNode || !targetNode || !sourceNode.visible || !targetNode.visible) {
+        // Library filter
+        if ((d.isexternal && !showExternal) || (!d.isexternal && !showInternal)) {
           return 'none';
         }
         
         return 'block';
       });
+    
+    // Update links visibility
+    gContainer.selectAll('.link')
+      .style('display', function(d) {
+        const sourceNode = d3.select(`.node[data-id="${d.source.id || d.source}"]`);
+        const targetNode = d3.select(`.node[data-id="${d.target.id || d.target}"]`);
+        
+        if (sourceNode.empty() || targetNode.empty() || 
+            sourceNode.style('display') === 'none' || 
+            targetNode.style('display') === 'none') {
+          return 'none';
+        }
+        
+        return 'block';
+      });
+      
+    console.log("Filters applied");
   }
   
   // Handle search input
