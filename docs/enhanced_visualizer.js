@@ -742,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (namespaceFilters.length === 0) return true;
       
       // Get the first level of the namespace from the nodeId
-      const firstLevelNamespace = nodeId.split('.')[0];
+      const firstLevelNamespace = getFirstLevelNamespace(nodeId);
       
       // Check if this first level namespace is in the list of filtered namespaces
       return namespaceFilters.includes(firstLevelNamespace);
@@ -1137,6 +1137,13 @@ document.addEventListener('DOMContentLoaded', function() {
     d3.select(event.currentTarget).classed('hover', false);
   }
   
+  // Function to extract the first level namespace from a full node ID
+  function getFirstLevelNamespace(nodeId) {
+    if (!nodeId) return '';
+    const parts = nodeId.split('.');
+    return parts[0] || '';
+  }
+  
   // Initialize filters based on the graph data
   function initializeFilters() {
     console.log("Initializing filters...");
@@ -1153,18 +1160,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Process each node to extract just the first level of namespaces
     graph.nodes.forEach(node => {
-      let firstLevelNamespace = null;
-      
-      if (node.group === 'namespace') {
-        // For namespace nodes, get only the first part
-        firstLevelNamespace = node.id.split('.')[0];
-      } else {
-        // For other nodes, extract the first part of the namespace
-        const parts = node.id.split('.');
-        if (parts.length > 1) {
-          firstLevelNamespace = parts[0];
-        }
-      }
+      // Get the first part of the namespace for every node
+      const firstLevelNamespace = getFirstLevelNamespace(node.id);
       
       // Add to set if valid
       if (firstLevelNamespace) {
