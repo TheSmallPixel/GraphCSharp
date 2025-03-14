@@ -483,8 +483,20 @@
     </div>
     
     <div class="sidebar-section" id="filters-container">
-      <h2>Filters</h2>
+      <h2>Filters <button id="reset-filters" class="small-button"><i class="fas fa-undo"></i> Reset</button></h2>
+      
+      <!-- Namespace filters (dynamically populated) -->
       <div class="filter-group">
+        <h4>Namespaces</h4>
+        <div id="namespace-filters" class="filter-group-content">
+          <!-- Will be populated dynamically -->
+          <div class="loading-placeholder">Loading namespaces...</div>
+        </div>
+      </div>
+      
+      <!-- Node type filters -->
+      <div class="filter-group">
+        <h4>Node Types</h4>
         <label>
           <input type="checkbox" class="node-filter" value="namespace" checked>
           <span class="color-indicator" style="background-color: var(--namespace-color)"></span>

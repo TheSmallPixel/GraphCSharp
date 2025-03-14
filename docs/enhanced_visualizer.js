@@ -717,6 +717,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const nodeTypes = Array.from(document.querySelectorAll('.node-filter:checked')).map(el => el.value);
     const linkTypes = Array.from(document.querySelectorAll('.link-filter:checked')).map(el => el.value);
     
+    // Get namespace filters
+    const namespaceFilters = Array.from(document.querySelectorAll('.namespace-filter:checked')).map(el => el.value);
+    
     // Get usage filters (used/unused)
     const showUsed = document.getElementById('filter-used')?.checked ?? true;
     const showUnused = document.getElementById('filter-unused')?.checked ?? true;
@@ -728,9 +731,28 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("Active filters:", {
       nodeTypes, 
       linkTypes, 
+      namespaces: namespaceFilters,
       usage: { showUsed, showUnused },
       origin: { showInternal, showExternal }
     });
+    
+    // Helper function to check if a node belongs to a namespace
+    const nodeInFilteredNamespace = (nodeId) => {
+      // If no namespace filters are selected, show all nodes
+      if (namespaceFilters.length === 0) return true;
+      
+      // For namespace nodes, check direct match
+      const node = graph.nodes.find(n => n.id === nodeId);
+      if (node && node.group === 'namespace') {
+        return namespaceFilters.some(ns => ns === nodeId);
+      }
+      
+      // For other nodes, check if they belong to any of the filtered namespaces
+      return namespaceFilters.some(namespace => {
+        // Check if the node ID starts with the namespace followed by a dot
+        return nodeId === namespace || nodeId.startsWith(namespace + '.');
+      });
+    };
     
     // Apply node filters
     gContainer.selectAll('.node').each(function(d) {
@@ -739,6 +761,11 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Check node type filter
       if (nodeTypes.length > 0 && !nodeTypes.includes(d.group)) {
+        visible = false;
+      }
+      
+      // Check namespace filter
+      if (visible && !nodeInFilteredNamespace(d.id)) {
         visible = false;
       }
       
@@ -1116,6 +1143,130 @@ document.addEventListener('DOMContentLoaded', function() {
     d3.select(event.currentTarget).classed('hover', false);
   }
   
+  // Initialize filters based on the graph data
+  function initializeFilters() {
+    console.log("Initializing filters...");
+    
+    // Extract all namespaces from the graph
+    const namespaces = new Set();
+    
+    // Extract namespace from node IDs
+    graph.nodes.forEach(node => {
+      if (node.group === 'namespace') {
+        namespaces.add(node.id);
+      } else {
+        // For non-namespace nodes, extract the namespace part
+        const parts = node.id.split('.');
+        if (parts.length > 1) {
+          // Find the namespace by looking at the first part(s) of the ID
+          // We consider everything before the last part as potentially part of the namespace
+          const potentialNamespace = parts.slice(0, -1).join('.');
+          
+          // Check if this potential namespace exists as a node
+          const namespaceNode = graph.nodes.find(n => 
+            n.group === 'namespace' && (n.id === potentialNamespace || potentialNamespace.startsWith(n.id + '.'))
+          );
+          
+          if (namespaceNode) {
+            namespaces.add(namespaceNode.id);
+          }
+        }
+      }
+    });
+    
+    // Sort namespaces alphabetically
+    const sortedNamespaces = Array.from(namespaces).sort();
+    
+    console.log("Found namespaces:", sortedNamespaces);
+    
+    // Generate namespace filter checkboxes
+    const namespaceFiltersContainer = document.getElementById('namespace-filters');
+    if (namespaceFiltersContainer) {
+      // Clear loading placeholder
+      namespaceFiltersContainer.innerHTML = '';
+      
+      // Add "Select All" checkbox
+      const selectAllDiv = document.createElement('div');
+      selectAllDiv.className = 'filter-item select-all';
+      
+      const selectAllLabel = document.createElement('label');
+      
+      const selectAllCheckbox = document.createElement('input');
+      selectAllCheckbox.type = 'checkbox';
+      selectAllCheckbox.className = 'namespace-select-all';
+      selectAllCheckbox.checked = true;
+      
+      const selectAllText = document.createElement('span');
+      selectAllText.textContent = 'Select All';
+      
+      selectAllLabel.appendChild(selectAllCheckbox);
+      selectAllLabel.appendChild(selectAllText);
+      selectAllDiv.appendChild(selectAllLabel);
+      namespaceFiltersContainer.appendChild(selectAllDiv);
+      
+      // Add individual namespace checkboxes
+      sortedNamespaces.forEach(namespace => {
+        const div = document.createElement('div');
+        div.className = 'filter-item';
+        
+        const label = document.createElement('label');
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'namespace-filter';
+        checkbox.value = namespace;
+        checkbox.checked = true;
+        checkbox.setAttribute('data-namespace', namespace);
+        
+        // Extract the last part of the namespace for display
+        const displayName = namespace.split('.').pop();
+        
+        const text = document.createElement('span');
+        text.textContent = displayName;
+        text.title = namespace; // Show full namespace on hover
+        
+        label.appendChild(checkbox);
+        label.appendChild(text);
+        div.appendChild(label);
+        namespaceFiltersContainer.appendChild(div);
+      });
+      
+      // Set up event listeners for namespace filters
+      document.querySelectorAll('.namespace-filter').forEach(filter => {
+        filter.addEventListener('change', () => {
+          console.log('Namespace filter changed:', filter.value, filter.checked);
+          applyFilters();
+          
+          // Update the "Select All" checkbox state
+          updateSelectAllCheckbox();
+        });
+      });
+      
+      // Set up the "Select All" checkbox event listener
+      document.querySelector('.namespace-select-all')?.addEventListener('change', function() {
+        const isChecked = this.checked;
+        document.querySelectorAll('.namespace-filter').forEach(checkbox => {
+          checkbox.checked = isChecked;
+        });
+        applyFilters();
+      });
+    }
+  }
+  
+  // Update the "Select All" checkbox based on individual checkbox states
+  function updateSelectAllCheckbox() {
+    const selectAllCheckbox = document.querySelector('.namespace-select-all');
+    const namespaceCheckboxes = document.querySelectorAll('.namespace-filter');
+    
+    if (selectAllCheckbox && namespaceCheckboxes.length > 0) {
+      const allChecked = Array.from(namespaceCheckboxes).every(checkbox => checkbox.checked);
+      const someChecked = Array.from(namespaceCheckboxes).some(checkbox => checkbox.checked);
+      
+      selectAllCheckbox.checked = allChecked;
+      selectAllCheckbox.indeterminate = !allChecked && someChecked;
+    }
+  }
+  
   // Add CSS styles for proper visualization
   function addStyles() {
     const styleElement = document.createElement('style');
@@ -1234,6 +1385,55 @@ document.addEventListener('DOMContentLoaded', function() {
       .unused {
         color: var(--unused-color);
       }
+      
+      /* Namespace filter styles */
+      #namespace-filters {
+        max-height: 200px;
+        overflow-y: auto;
+        margin-bottom: 15px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        padding: 5px;
+      }
+      
+      .loading-placeholder {
+        font-style: italic;
+        color: #999;
+        text-align: center;
+        padding: 10px;
+      }
+      
+      .filter-item {
+        margin: 5px 0;
+      }
+      
+      .filter-item label {
+        display: flex;
+        align-items: center;
+      }
+      
+      .select-all {
+        font-weight: bold;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+        margin-bottom: 8px;
+      }
+      
+      /* Reset button styling */
+      #reset-filters {
+        margin-left: 10px;
+        font-size: 0.7em;
+        padding: 3px 8px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      #reset-filters:hover {
+        background: #e0e0e0;
+      }
     `;
     
     document.head.appendChild(styleElement);
@@ -1241,6 +1441,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize the visualization
   initVisualization();
+  initializeFilters();
   addStyles();
 });
 
@@ -1282,3 +1483,56 @@ document.addEventListener('DOMContentLoaded', function() {
   
   console.log("Additional event listeners setup complete");
 });
+
+// Add event listener for reset filters button
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("Setting up reset filters button");
+  
+  // Add reset filters functionality
+  document.getElementById('reset-filters')?.addEventListener('click', function() {
+    console.log("Reset filters button clicked");
+    resetAllFilters();
+  });
+});
+
+// Function to reset all filters to default state
+function resetAllFilters() {
+  console.log("Resetting all filters to defaults");
+  
+  // Reset node type filters
+  document.querySelectorAll('.node-filter').forEach(checkbox => {
+    checkbox.checked = true;
+  });
+  
+  // Reset link type filters
+  document.querySelectorAll('.link-filter').forEach(checkbox => {
+    checkbox.checked = true;
+  });
+  
+  // Reset namespace filters
+  document.querySelectorAll('.namespace-filter').forEach(checkbox => {
+    checkbox.checked = true;
+  });
+  
+  // Reset "Select All" namespace checkbox
+  const selectAllCheckbox = document.querySelector('.namespace-select-all');
+  if (selectAllCheckbox) {
+    selectAllCheckbox.checked = true;
+    selectAllCheckbox.indeterminate = false;
+  }
+  
+  // Reset usage filters
+  document.getElementById('filter-used').checked = true;
+  document.getElementById('filter-unused').checked = true;
+  
+  // Reset library filters
+  document.getElementById('filter-internal').checked = true;
+  document.getElementById('filter-external').checked = true;
+  
+  // Apply filter changes
+  if (typeof applyFilters === 'function') {
+    applyFilters();
+  }
+  
+  console.log("All filters have been reset");
+}
