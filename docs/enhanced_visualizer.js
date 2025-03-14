@@ -25,65 +25,61 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize the visualization
   function init() {
-    // Create SVG and container for the visualization
-    svg = d3.select('#chart')
-      .append('svg')
-      .attr('width', '100%')
-      .attr('height', '100%');
-    
-    // Add a background rect to handle zoom events on empty space
-    svg.append('rect')
-      .attr('width', '100%')
-      .attr('height', '100%')
-      .attr('fill', 'transparent');
-    
-    gContainer = svg.append('g')
-      .attr('class', 'everything');
-    
-    // Setup zoom behavior
-    zoomBehavior = d3.zoom()
-      .scaleExtent([0.1, 10])
-      .on('zoom', (event) => {
-        gContainer.attr('transform', event.transform);
-      });
-    
-    svg.call(zoomBehavior);
-    
-    // Setup event listeners
-    setupEventListeners();
-    
-    // Load the data
-    loadData();
+    // Load data and set up the visualization
+    loadGraph();
   }
   
-  // Load graph data from the JSON file
-  function loadData() {
-    fetch('graph.json')
-      .then(response => response.json())
-      .then(data => {
-        graph = data;
-        processData();
-        drawGraph();
-        hideLoading();
-        updateStatistics();
-      })
-      .catch(err => {
-        console.error("Error loading graph data:", err);
-        hideLoading();
-        alert("Failed to load graph data. Please check the console for details.");
+  // Set up the visualization after data is loaded
+  function setupVisualization() {
+    // Process data
+    processData();
+    
+    // Calculate stats
+    updateStats();
+    
+    // Draw graph
+    drawGraph();
+    
+    // Set up event listeners
+    setupEventListeners();
+  }
+  
+  // Load graph data
+  function loadGraph() {
+    d3.json('graph.json').then(data => {
+      // Store the data
+      graph = data;
+      
+      // Ensure all nodes have the required properties
+      graph.nodes.forEach(node => {
+        // Make sure all properties exist
+        node.group = node.group || '';
+        node.label = node.label || '';
+        node.id = node.id || '';
+        node.used = node.used || false;
+        
+        // Convert isexternal from string to boolean if needed
+        // This handles potential issues with JSON serialization
+        if (typeof node.isexternal === 'string') {
+          node.isexternal = node.isexternal.toLowerCase() === 'true';
+        } else {
+          node.isexternal = Boolean(node.isexternal);
+        }
+        
+        console.log(`Node ${node.id}: isexternal=${node.isexternal} (type: ${typeof node.isexternal})`);
       });
+      
+      // Set up visualization
+      setupVisualization();
+    }).catch(error => {
+      console.error('Error loading graph data:', error);
+    });
   }
   
   // Process the data to analyze usage patterns
   function processData() {
     // Initialize node usage counts
     graph.nodes.forEach(node => {
-      node.group = node.group || '';
-      node.label = node.label || '';
-      node.id = node.id || '';
-      node.used = node.used || false;
-      node.isexternal = node.isexternal || false;  // Lowercase to match JSON naming
-      
       nodeUsageCounts.set(node.id, 0);
       nodeReferences.set(node.id, { incoming: [], outgoing: [] });
     });
@@ -146,7 +142,31 @@ document.addEventListener('DOMContentLoaded', function() {
   // Draw the graph using D3
   function drawGraph() {
     // Clear previous visualization
-    gContainer.selectAll('*').remove();
+    d3.select('#chart').html('');
+    
+    // Create SVG and container for the visualization
+    svg = d3.select('#chart')
+      .append('svg')
+      .attr('width', '100%')
+      .attr('height', '100%');
+    
+    // Add a background rect to handle zoom events on empty space
+    svg.append('rect')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('fill', 'transparent');
+    
+    gContainer = svg.append('g')
+      .attr('class', 'everything');
+    
+    // Setup zoom behavior
+    zoomBehavior = d3.zoom()
+      .scaleExtent([0.1, 10])
+      .on('zoom', (event) => {
+        gContainer.attr('transform', event.transform);
+      });
+    
+    svg.call(zoomBehavior);
     
     // Get element and window sizes
     const width = chartContainer.clientWidth;
@@ -828,6 +848,9 @@ document.addEventListener('DOMContentLoaded', function() {
       selectedNode = null;
       resetHighlights();
     });
+    
+    // Initial call to apply filters
+    applyFilters();
   }
   
   // Apply all filters
@@ -846,20 +869,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const showInternal = document.getElementById('filter-internal').checked;
     const showExternal = document.getElementById('filter-external').checked;
     
+    console.log("Filters:", { selectedGroups, showUsed, showUnused, showInternal, showExternal });
+    
     // Apply all filters together
     gContainer.selectAll('.node')
       .style('display', function(d) {
         // Type filter
-        if (!selectedGroups.includes(d.group)) return 'none';
+        if (!selectedGroups.includes(d.group)) {
+          console.log(`Node ${d.id} hidden: group ${d.group} not in selected groups`);
+          return 'none';
+        }
         
         // Usage filter
-        if (d.used && !showUsed) return 'none';
-        if (!d.used && !showUnused) return 'none';
+        if (d.used && !showUsed) {
+          console.log(`Node ${d.id} hidden: used but showUsed is false`);
+          return 'none';
+        }
+        if (!d.used && !showUnused) {
+          console.log(`Node ${d.id} hidden: unused but showUnused is false`);
+          return 'none';
+        }
         
-        // Library filter
-        if (d.isexternal && !showExternal) return 'none';
-        if (!d.isexternal && !showInternal) return 'none';
+        // Library filter - debugging to find the issue
+        console.log(`Checking external for ${d.id}: isexternal=${d.isexternal}, showExternal=${showExternal}, showInternal=${showInternal}`);
         
+        if (d.isexternal && !showExternal) {
+          console.log(`Node ${d.id} hidden: external library`);
+          return 'none';
+        }
+        if (!d.isexternal && !showInternal) {
+          console.log(`Node ${d.id} hidden: internal code`);
+          return 'none';
+        }
+        
+        console.log(`Node ${d.id} visible`);
         return 'block';
       });
     
