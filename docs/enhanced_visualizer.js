@@ -314,7 +314,10 @@ document.addEventListener('DOMContentLoaded', function() {
       .attr('text-anchor', 'middle')
       .text(d => d.name || d.label || d.id.split('.').pop())
       .style('font-size', '10px')
-      .style('fill', '#fff')
+      .style('fill', 'black')
+      .style('stroke', 'white')
+      .style('stroke-width', '0.5px')
+      .style('paint-order', 'stroke')
       .style('pointer-events', 'none');
     
     console.log("Graph drawing complete");
