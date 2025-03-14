@@ -88,29 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
       nodeReferences.set(node.id, { incoming: [], outgoing: [] });
     });
     
-    // Count references to each node
-    graph.links.forEach(link => {
-      // Increment the target's usage count
-      const targetCount = nodeUsageCounts.get(link.target) || 0;
-      nodeUsageCounts.set(link.target, targetCount + 1);
-      
-      // Record the reference
-      const sourceRefs = nodeReferences.get(link.source);
-      if (sourceRefs) {
-        sourceRefs.outgoing.push({
-          id: link.target,
-          type: link.type
-        });
-      }
-      
-      const targetRefs = nodeReferences.get(link.target);
-      if (targetRefs) {
-        targetRefs.incoming.push({
-          id: link.source,
-          type: link.type
-        });
-      }
-    });
+    // Count references for each node
+    countNodeReferences();
     
     // Identify unused elements (methods and properties with no incoming references)
     graph.nodes.forEach(node => {
@@ -124,6 +103,42 @@ document.addEventListener('DOMContentLoaded', function() {
           unusedElements.add(node.id);
           node.used = false;
         }
+      }
+    });
+  }
+  
+  // Count references for each node
+  function countNodeReferences() {
+    // Reset counts
+    graph.nodes.forEach(node => {
+      nodeUsageCounts.set(node.id, 0);
+      nodeReferences.set(node.id, { incoming: [], outgoing: [] });
+    });
+    
+    // Count references
+    graph.links.forEach(link => {
+      const sourceId = link.source.id || link.source;
+      const targetId = link.target.id || link.target;
+      
+      // Increment target's incoming count 
+      nodeUsageCounts.set(targetId, (nodeUsageCounts.get(targetId) || 0) + 1);
+      
+      // Add to reference tracking
+      if (nodeReferences.has(sourceId)) {
+        nodeReferences.get(sourceId).outgoing.push(targetId);
+      }
+      
+      if (nodeReferences.has(targetId)) {
+        nodeReferences.get(targetId).incoming.push(sourceId);
+      }
+    });
+    
+    // Synchronize usage count with used flag
+    // Any node with references should be marked as used
+    graph.nodes.forEach(node => {
+      const usageCount = nodeUsageCounts.get(node.id) || 0;
+      if (usageCount > 0) {
+        node.used = true;
       }
     });
   }
