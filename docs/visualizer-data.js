@@ -6,13 +6,15 @@
  * - Node and link relationship mapping
  */
 
-// Data structure variables
+// Data structure variables are now declared in visualizer-main.js
+/*
 let graph = { nodes: [], links: [] };
 let graphData = {};
 let nodeMap = new Map();
 let nodeUsageCounts = new Map();
 let nodeRelationships = new Map();
 let namespaces = new Set();
+*/
 
 /**
  * Load the graph data from the data file

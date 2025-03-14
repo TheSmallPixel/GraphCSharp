@@ -7,12 +7,14 @@
  * - Context menu
  */
 
-// UI element references
+// UI element references (now declared in visualizer-main.js)
+/*
 let chartContainer;
 let detailPanel;
 let tooltip;
 let filterContainer;
 let loadingOverlay;
+*/
 
 // State tracking
 let selectedNode = null;

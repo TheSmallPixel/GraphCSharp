@@ -1,6 +1,6 @@
 /**
  * Main entry point for the C# Code Graph Visualizer
- * This file loads all the required modules in the correct order
+ * This file loads all the required modules and contains all shared variables
  */
 
 // Global graph data
@@ -25,100 +25,39 @@ let zoomBehavior;
 let simulation;
 let currentLayout = 'force';
 
-// Load the visualization modules sequentially with dynamic imports
-document.addEventListener('DOMContentLoaded', async function() {
-  // Add dynamic script loading function
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.body.appendChild(script);
-    });
-  }
+// State tracking
+let selectedNode = null;
+let highlightedNode = null;
 
-  try {
-    console.log('C# Code Graph Visualizer starting...');
-    
-    // Initialize UI references
-    chartContainer = document.getElementById('chart');
-    detailPanel = document.getElementById('detail-panel');
-    loadingOverlay = document.getElementById('loading-overlay');
-    tooltip = document.getElementById('tooltip');
-    filterContainer = document.getElementById('filters-container');
-    
-    // Show loading overlay
-    if (loadingOverlay) {
-      console.log('Showing loading overlay');
-      loadingOverlay.style.display = 'flex';
-    } else {
-      console.error('Loading overlay element not found!');
-    }
-    
-    // Load modules in the required order
-    console.log('Loading visualization modules...');
-    await loadScript('visualizer-data.js');
-    await loadScript('visualizer-styles.js');
-    await loadScript('visualizer-filters.js');
-    await loadScript('visualizer-ui.js');
-    await loadScript('visualizer-core.js');
-    
-    console.log('All visualization modules loaded successfully');
-    
-    // Initialize the visualization manually since modules are loaded dynamically
-    setTimeout(() => initVisualization(), 100);
-  } catch (error) {
-    console.error('Error loading visualization modules:', error);
-    
-    // Hide loading overlay on error
+// Initialize when the document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('C# Code Graph Visualizer starting...');
+  
+  // Initialize UI references
+  chartContainer = document.getElementById('chart');
+  detailPanel = document.getElementById('detail-panel');
+  loadingOverlay = document.getElementById('loading-overlay');
+  tooltip = document.getElementById('tooltip');
+  filterContainer = document.getElementById('filters-container');
+  
+  // Show loading overlay
+  if (loadingOverlay) {
+    console.log('Showing loading overlay');
+    loadingOverlay.style.display = 'flex';
+  }
+  
+  // Load the original visualizer script
+  const script = document.createElement('script');
+  script.src = 'enhanced_visualizer.js';
+  script.onload = function() {
+    console.log('Visualization loaded successfully');
+  };
+  script.onerror = function(error) {
+    console.error('Error loading visualization:', error);
     if (loadingOverlay) {
       loadingOverlay.style.display = 'none';
     }
-    
-    // Show error to user
-    alert('Failed to load visualization: ' + error.message);
-  }
+    alert('Failed to load visualization: ' + error);
+  };
+  document.body.appendChild(script);
 });
-
-/**
- * Initialize the visualization
- */
-async function initVisualization() {
-  try {
-    console.log('Initializing visualization...');
-    
-    // Load data
-    await loadGraph();
-    
-    // Setup visualization components
-    setupVisualization();
-    
-    // Initialize filters
-    initializeFilters();
-    
-    // Add custom styles
-    addStyles();
-    
-    // Setup event listeners for layout controls
-    document.getElementById('force-layout').addEventListener('click', switchToForceDirectedLayout);
-    document.getElementById('hierarchical-layout').addEventListener('click', switchToHierarchicalLayout);
-    document.getElementById('reset-zoom').addEventListener('click', resetZoom);
-    document.getElementById('reset-filters').addEventListener('click', resetAllFilters);
-    
-    // Hide loading overlay when complete
-    if (loadingOverlay) {
-      loadingOverlay.style.display = 'none';
-      console.log('Visualization initialized successfully!');
-    }
-  } catch (error) {
-    console.error('Error initializing visualization:', error);
-    
-    // Hide loading overlay on error
-    if (loadingOverlay) {
-      loadingOverlay.style.display = 'none';
-    }
-    
-    alert('Failed to initialize visualization: ' + error.message);
-  }
-}
