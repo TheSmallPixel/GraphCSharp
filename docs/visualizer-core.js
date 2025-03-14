@@ -7,42 +7,14 @@
  * - Zoom and pan behavior
  */
 
-// Global variables for visualization
+// These variables are now defined in visualizer-main.js and shared across modules
+/*
 let svg;
 let gContainer;
 let zoomBehavior;
 let simulation;
 let currentLayout = 'force';
-
-/**
- * Initialize the visualization
- */
-async function initVisualization() {
-  try {
-    console.log('Initializing visualization...');
-    
-    // Show loading overlay during initialization
-    showLoading();
-    
-    // Load data
-    await loadGraph();
-    
-    // Setup visualization components
-    setupVisualization();
-    
-    // Initialize filters
-    initializeFilters();
-    
-    // Add custom styles
-    addStyles();
-    
-    // Hide loading overlay when complete
-    hideLoading();
-  } catch (error) {
-    console.error('Error initializing visualization:', error);
-    alert('Failed to initialize visualization: ' + error.message);
-  }
-}
+*/
 
 /**
  * Set up the visualization after data is loaded
@@ -82,6 +54,9 @@ function setupVisualization() {
   
   // Initialize force layout
   initializeForceLayout();
+  
+  // Set up background click to clear selection
+  setupBackgroundClick();
   
   console.log("Visualization setup complete");
 }
@@ -442,9 +417,6 @@ document.addEventListener('DOMContentLoaded', function() {
   loadingOverlay = document.getElementById('loading-overlay');
   tooltip = document.getElementById('tooltip');
   filterContainer = document.getElementById('filters');
-  
-  // Initialize visualization
-  initVisualization();
   
   // Layout control buttons
   document.getElementById('force-layout').addEventListener('click', switchToForceDirectedLayout);
