@@ -22,11 +22,33 @@ document.addEventListener('DOMContentLoaded', function() {
   // Track current visualization state
   let unusedElements = new Set();
   
-  // Initialize the visualization
-  function init() {
-    console.log("Initializing visualization...");
-    // Load data and set up the visualization
-    loadGraph();
+  // Load and initialize visualization
+  async function initVisualization() {
+    try {
+      console.log('Initializing visualization...');
+      
+      // Load data
+      graph = await d3.json('graph.json');
+      console.log(`Loaded graph data: ${graph.nodes.length} nodes, ${graph.links.length} links`);
+      
+      // Initialize the visualization
+      initializeForceLayout();
+      
+      // Set up event listeners
+      setupEventListeners();
+      
+      // Calculate stats
+      updateStats();
+      
+      // Apply filters
+      setTimeout(() => {
+        applyFilters();
+        console.log('Visualization fully initialized');
+      }, 200);
+      
+    } catch (error) {
+      console.error('Error initializing visualization:', error);
+    }
   }
   
   // Set up the visualization after data is loaded
@@ -63,13 +85,46 @@ document.addEventListener('DOMContentLoaded', function() {
     // Draw graph
     drawGraph();
     
-    // Calculate stats
-    updateStats();
-    
-    // Set up event listeners
-    setupEventListeners();
-    
     console.log("Visualization setup complete");
+  }
+  
+  // Initialize force layout
+  function initializeForceLayout() {
+    console.log("Initializing force layout...");
+    
+    // Initialize the force simulation
+    simulation = d3.forceSimulation(graph.nodes)
+      .force('link', d3.forceLink(graph.links)
+        .id(d => d.id)
+        .distance(d => {
+          // Adjust link distance based on node types
+          if (d.type === 'containment') return 80;
+          if (d.type === 'reference') return 120;
+          return 100;
+        })
+        .strength(d => {
+          if (d.type === 'reference') return 0.2;
+          if (d.type === 'external') return 0.1;
+          return 0.5;
+        })
+      )
+      .force('charge', d3.forceManyBody().strength(-300))
+      .force('center', d3.forceCenter(chartContainer.clientWidth / 2, chartContainer.clientHeight / 2))
+      .force('collision', d3.forceCollide().radius(30));
+    
+    // Update simulation on tick
+    simulation.on('tick', () => {
+      gContainer.selectAll('.link')
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+      
+      gContainer.selectAll('.node')
+        .attr('transform', d => `translate(${d.x}, ${d.y})`);
+    });
+    
+    console.log("Force layout initialized");
   }
   
   // Load graph data
@@ -172,192 +227,60 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Draw the graph using D3
+  // Draw the graph
   function drawGraph() {
-    // Clear previous visualization
-    d3.select('#chart').html('');
+    console.log("Drawing graph...");
     
-    // Get element and window sizes
-    const width = chartContainer.clientWidth;
-    const height = chartContainer.clientHeight;
+    // Clear previous graph elements
+    gContainer.selectAll('*').remove();
     
-    // Create color scales
-    const colorMap = {
-      namespace: getComputedStyle(document.documentElement).getPropertyValue('--namespace-color'),
-      class: getComputedStyle(document.documentElement).getPropertyValue('--class-color'),
-      method: getComputedStyle(document.documentElement).getPropertyValue('--method-color'),
-      property: getComputedStyle(document.documentElement).getPropertyValue('--property-color'),
-      variable: getComputedStyle(document.documentElement).getPropertyValue('--variable-color'),
-      type: getComputedStyle(document.documentElement).getPropertyValue('--type-color')
-    };
-    
-    // Create a custom boundary force
-    function forceBoundary(alpha) {
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const radius = Math.min(width, height) / 2 - 50; // Boundary radius
-
-      for (let i = 0, n = graph.nodes.length; i < n; ++i) {
-        const node = graph.nodes[i];
-        // Calculate distance from center
-        const dx = node.x - centerX;
-        const dy = node.y - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // If node is outside boundary, push it back
-        if (distance > radius) {
-          const k = (distance - radius) / distance * alpha;
-          node.x -= dx * k;
-          node.y -= dy * k;
-        }
-      }
-    }
-    
-    // Initialize the force simulation
-    simulation = d3.forceSimulation(graph.nodes)
-      .force('link', d3.forceLink(graph.links)
-        .id(d => d.id)
-        .distance(d => {
-          // Adjust link distance based on node types
-          if (d.type === 'containment') return 80;
-          if (d.type === 'reference') return 120;
-          return 100;
-        })
-        .strength(d => {
-          if (d.type === 'reference') return 0.2;
-          if (d.type === 'external') return 0.1;
-          return 0.5;
-        })
-      )
-      .force('charge', d3.forceManyBody().strength(-300))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(30))
-      .force('boundary', forceBoundary); // Custom boundary force
-
-    // Draw links
-    const link = gContainer.selectAll('.link')
+    // Create links
+    const links = gContainer.selectAll('.link')
       .data(graph.links)
-      .enter().append('line')
+      .enter()
+      .append('line')
       .attr('class', 'link')
-      .style('stroke', d => {
-        switch(d.type) {
-          case 'reference': return 'blue';
-          case 'external': return 'red';
-          case 'call': return '#555';
-          default: return '#999';
-        }
-      })
-      .style('stroke-width', 1.5)
-      .style('stroke-dasharray', d => {
-        return d.type === 'reference' || d.type === 'external' ? '3,3' : null;
-      });
+      .attr('data-source', d => d.source.id || d.source)
+      .attr('data-target', d => d.target.id || d.target)
+      .attr('data-type', d => d.type)
+      .style('stroke', d => getLinkColor(d))
+      .style('stroke-width', 1.5);
     
-    // Draw nodes
-    const node = gContainer.selectAll('.node')
-      .data(graph.nodes, d => d.id)
+    // Create nodes
+    const nodes = gContainer.selectAll('.node')
+      .data(graph.nodes)
       .enter()
       .append('g')
-      .attr('class', d => `node ${d.used ? 'used' : 'unused'}`)
+      .attr('class', 'node')
       .attr('data-id', d => d.id)
       .attr('data-group', d => d.group)
       .attr('data-used', d => d.used)
       .attr('data-external', d => d.isexternal)
       .call(d3.drag()
-        .on('start', function(event, d) {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        })
-        .on('drag', function(event, d) {
-          d.fx = event.x;
-          d.fy = event.y;
-        })
-        .on('end', function(event, d) {
-          if (!event.active) simulation.alphaTarget(0);
-          d.fx = null;
-          d.fy = null;
-        }))
-      .on('click', function(event, d) {
-        // Clear previous selection
-        gContainer.selectAll('.node.selected').classed('selected', false);
-        
-        // Mark this node as selected
-        d3.select(this).classed('selected', true);
-        selectedNode = d;
-        
-        // Highlight connected nodes
-        highlightNodeConnections(d.id);
-        
-        // Show node details panel
-        showNodeDetails(d);
-        detailPanel.classList.add('active');
-      });
+        .on('start', dragStarted)
+        .on('drag', dragged)
+        .on('end', dragEnded))
+      .on('mouseover', nodeMouseOver)
+      .on('mouseout', nodeMouseOut)
+      .on('click', nodeClicked);
     
-    // Add circles to nodes
-    node.append('circle')
-      .attr('r', d => {
-        if (d.group === 'namespace') return 12;
-        if (d.group === 'class') return 10;
-        if (d.group === 'method') return 7;
-        if (d.group === 'property') return 7;
-        if (d.group === 'variable') return 5;
-        return 6;
-      })
-      .attr('fill', getNodeColor)
-      .attr('stroke', d => {
-        // Add stroke for unused elements
-        if (d.used === false) {
-          return getComputedStyle(document.documentElement).getPropertyValue('--unused-color');
-        }
-        return '#fff';
-      })
-      .attr('stroke-width', d => d.used === false ? 2 : 1.5);
+    // Add node circles
+    nodes.append('circle')
+      .attr('r', d => getNodeRadius(d))
+      .style('fill', d => getNodeColor(d))
+      .style('stroke', '#fff')
+      .style('stroke-width', 1.5);
     
-    // Add labels to nodes
-    node.append('text')
+    // Add node labels
+    nodes.append('text')
+      .attr('dy', 4)
       .attr('text-anchor', 'middle')
-      .attr('dy', '.35em')
-      .attr('y', d => {
-        // Position label below node for larger elements
-        if (d.group === 'namespace' || d.group === 'class') return 20;
-        return 15;
-      })
-      .text(d => d.label)
-      .style('font-weight', d => d.group === 'namespace' || d.group === 'class' ? 'bold' : 'normal')
-      .style('font-size', d => {
-        if (d.group === 'namespace') return '12px';
-        if (d.group === 'class') return '11px';
-        return '10px';
-      });
+      .text(d => d.name)
+      .style('font-size', '10px')
+      .style('fill', '#fff')
+      .style('pointer-events', 'none');
     
-    // Add event listeners to nodes
-    node
-      .on('mouseover', handleNodeMouseOver)
-      .on('mouseout', handleNodeMouseOut)
-      .on('click', handleNodeClick);
-    
-    // Update simulation on tick
-    simulation.on('tick', () => {
-      link
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
-      
-      node.attr('transform', d => `translate(${d.x}, ${d.y})`);
-    });
-    
-    // Update node-link counter
-    document.getElementById('node-link-counter').textContent = 
-      `Nodes: ${graph.nodes.length} | Links: ${graph.links.length}`;
-    
-    // Apply current layout
-    if (currentLayout === 'hierarchical') {
-      switchToHierarchicalLayout();
-    }
-    
-    // Reset zoom
-    resetZoom();
+    console.log("Graph drawing complete");
   }
   
   // Function to get node color
@@ -387,6 +310,26 @@ document.addEventListener('DOMContentLoaded', function() {
       default:
         return '#999999';
     }
+  }
+  
+  // Function to get link color
+  function getLinkColor(link) {
+    switch(link.type) {
+      case 'reference': return 'blue';
+      case 'external': return 'red';
+      case 'call': return '#555';
+      default: return '#999';
+    }
+  }
+  
+  // Function to get node radius
+  function getNodeRadius(node) {
+    if (node.group === 'namespace') return 12;
+    if (node.group === 'class') return 10;
+    if (node.group === 'method') return 7;
+    if (node.group === 'property') return 7;
+    if (node.group === 'variable') return 5;
+    return 6;
   }
   
   // Switch to hierarchical layout
@@ -877,82 +820,52 @@ document.addEventListener('DOMContentLoaded', function() {
   function setupEventListeners() {
     console.log("Setting up event listeners...");
     
-    // Layout toggle
-    const toggleLayoutBtn = document.getElementById('toggle-layout');
-    if (toggleLayoutBtn) {
-      toggleLayoutBtn.addEventListener('click', () => {
-        currentLayout = currentLayout === 'force' ? 'hierarchical' : 'force';
-        toggleLayoutBtn.textContent = 
-          currentLayout === 'force' ? 'Switch to Hierarchical Layout' : 'Switch to Force Layout';
-        
-        // Update the visualization
-        updateLayout();
+    // Node type filters (class, method, etc.)
+    document.querySelectorAll('.node-filter').forEach(filter => {
+      filter.addEventListener('change', () => {
+        console.log(`Node type filter changed: ${filter.value} = ${filter.checked}`);
+        applyFilters();
       });
-    } else {
-      console.warn("Element #toggle-layout not found");
-    }
+    });
     
-    // Highlight unused toggle
-    const toggleHighlightBtn = document.getElementById('toggle-highlight-unused');
-    if (toggleHighlightBtn) {
-      toggleHighlightBtn.addEventListener('click', () => {
-        highlightUnused = !highlightUnused;
-        
-        // Update the visualization
-        updateNodeColors();
-      });
-    } else {
-      console.warn("Element #toggle-highlight-unused not found");
-    }
-    
-    // Node type filters
-    const nodeFilters = document.querySelectorAll('.node-filter');
-    if (nodeFilters && nodeFilters.length > 0) {
-      nodeFilters.forEach(filter => {
-        filter.addEventListener('change', () => {
-          applyFilters();
-        });
-      });
-    } else {
-      console.warn("No node filter elements found");
-    }
-    
-    // Usage filters
+    // Usage filters (used/unused)
     const filterUsed = document.getElementById('filter-used');
     if (filterUsed) {
-      filterUsed.addEventListener('change', applyFilters);
-    } else {
-      console.warn("Element #filter-used not found");
+      filterUsed.addEventListener('change', () => {
+        console.log(`Used filter changed: ${filterUsed.checked}`);
+        applyFilters();
+      });
     }
     
     const filterUnused = document.getElementById('filter-unused');
     if (filterUnused) {
-      filterUnused.addEventListener('change', applyFilters);
-    } else {
-      console.warn("Element #filter-unused not found");
+      filterUnused.addEventListener('change', () => {
+        console.log(`Unused filter changed: ${filterUnused.checked}`);
+        applyFilters();
+      });
     }
     
-    // Library filters
+    // Library filters (internal/external)
     const filterInternal = document.getElementById('filter-internal');
     if (filterInternal) {
-      filterInternal.addEventListener('change', applyFilters);
-    } else {
-      console.warn("Element #filter-internal not found");
+      filterInternal.addEventListener('change', () => {
+        console.log(`Internal filter changed: ${filterInternal.checked}`);
+        applyFilters();
+      });
     }
     
     const filterExternal = document.getElementById('filter-external');
     if (filterExternal) {
-      filterExternal.addEventListener('change', applyFilters);
-    } else {
-      console.warn("Element #filter-external not found");
+      filterExternal.addEventListener('change', () => {
+        console.log(`External filter changed: ${filterExternal.checked}`);
+        applyFilters();
+      });
     }
     
     // Search
     const searchInput = document.getElementById('search');
     if (searchInput) {
       searchInput.addEventListener('input', handleSearch);
-    } else {
-      console.warn("Element #search not found");
     }
     
     // Zoom controls
@@ -962,8 +875,6 @@ document.addEventListener('DOMContentLoaded', function() {
         svg.transition().duration(300)
           .call(zoomBehavior.scaleBy, 1.5);
       });
-    } else {
-      console.warn("Element #zoom-in not found");
     }
     
     const zoomOutBtn = document.getElementById('zoom-out');
@@ -972,8 +883,6 @@ document.addEventListener('DOMContentLoaded', function() {
         svg.transition().duration(300)
           .call(zoomBehavior.scaleBy, 0.66);
       });
-    } else {
-      console.warn("Element #zoom-out not found");
     }
     
     const zoomResetBtn = document.getElementById('zoom-reset');
@@ -982,8 +891,6 @@ document.addEventListener('DOMContentLoaded', function() {
         svg.transition().duration(300)
           .call(zoomBehavior.transform, d3.zoomIdentity);
       });
-    } else {
-      console.warn("Element #zoom-reset not found");
     }
     
     // Detail panel close button
@@ -996,13 +903,6 @@ document.addEventListener('DOMContentLoaded', function() {
         gContainer.selectAll('.node.selected').classed('selected', false);
         selectedNode = null;
       });
-    } else {
-      console.warn("Element #close-details not found");
-    }
-    
-    // Initial filter application (only if needed DOM elements exist)
-    if (document.querySelectorAll('.node-filter').length > 0) {
-      setTimeout(applyFilters, 100); // Slight delay to ensure DOM is ready
     }
     
     console.log("Event listeners setup complete");
@@ -1029,62 +929,68 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log("Applying filters...");
     
-    // Get selected node types
-    const selectedGroups = [];
+    // Node type filters (class, method, etc.)
+    const nodeTypes = [];
     document.querySelectorAll('.node-filter:checked').forEach(filter => {
-      selectedGroups.push(filter.value);
+      nodeTypes.push(filter.value);
     });
+    console.log("Node types:", nodeTypes);
     
-    // Get usage filter state
+    // Link type filters
+    const linkTypes = [];
+    document.querySelectorAll('.link-filter:checked').forEach(filter => {
+      linkTypes.push(filter.value);
+    });
+    console.log("Link types:", linkTypes);
+    
+    // Usage filters
     const showUsed = document.getElementById('filter-used')?.checked ?? true;
     const showUnused = document.getElementById('filter-unused')?.checked ?? true;
+    console.log("Usage filters:", { showUsed, showUnused });
     
-    // Get library filter state
+    // Library filters
     const showInternal = document.getElementById('filter-internal')?.checked ?? true;
     const showExternal = document.getElementById('filter-external')?.checked ?? true;
+    console.log("Library filters:", { showInternal, showExternal });
     
-    console.log("Filter settings:", { 
-      types: selectedGroups, 
-      usage: { showUsed, showUnused }, 
-      library: { showInternal, showExternal } 
+    // Filter nodes
+    gContainer.selectAll('.node').style('display', function(d) {
+      // Node type filter
+      if (nodeTypes.length > 0 && !nodeTypes.includes(d.group)) {
+        return 'none';
+      }
+      
+      // Usage filter
+      if (d.used === true && !showUsed) return 'none';
+      if (d.used !== true && !showUnused) return 'none';
+      
+      // Library filter
+      if (d.isexternal === true && !showExternal) return 'none';
+      if (d.isexternal !== true && !showInternal) return 'none';
+      
+      return null;
     });
     
-    // Apply filters to node visibility
-    gContainer.selectAll('.node')
-      .style('display', function(d) {
-        // Type filter
-        if (selectedGroups.length > 0 && !selectedGroups.includes(d.group)) {
-          return 'none';
-        }
-        
-        // Usage filter
-        if ((d.used && !showUsed) || (!d.used && !showUnused)) {
-          return 'none';
-        }
-        
-        // Library filter
-        if ((d.isexternal && !showExternal) || (!d.isexternal && !showInternal)) {
-          return 'none';
-        }
-        
-        return 'block';
-      });
-    
-    // Update links visibility
-    gContainer.selectAll('.link')
-      .style('display', function(d) {
-        const sourceNode = d3.select(`.node[data-id="${d.source.id || d.source}"]`);
-        const targetNode = d3.select(`.node[data-id="${d.target.id || d.target}"]`);
-        
-        if (sourceNode.empty() || targetNode.empty() || 
-            sourceNode.style('display') === 'none' || 
-            targetNode.style('display') === 'none') {
-          return 'none';
-        }
-        
-        return 'block';
-      });
+    // Filter links
+    gContainer.selectAll('.link').style('display', function(d) {
+      // Link type filter
+      if (linkTypes.length > 0 && !linkTypes.includes(d.type)) {
+        return 'none';
+      }
       
+      // Check if connected nodes are visible
+      const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+      const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+      
+      const sourceVisible = !gContainer.select(`.node[data-id="${sourceId}"]`).empty() &&
+                           gContainer.select(`.node[data-id="${sourceId}"]`).style('display') !== 'none';
+      
+      const targetVisible = !gContainer.select(`.node[data-id="${targetId}"]`).empty() &&
+                           gContainer.select(`.node[data-id="${targetId}"]`).style('display') !== 'none';
+      
+      return (sourceVisible && targetVisible) ? null : 'none';
+    });
+    
     console.log("Filters applied");
   }
   
@@ -1170,6 +1076,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 0);
   }
   
+  // Debug helper for filter nodes and links
+  function debugNodeData() {
+    console.group("Node Data Debug");
+    gContainer.selectAll('.node').each(function(d, i) {
+      if (i < 5) { // Limit to first 5 nodes for clarity
+        console.log(`Node ${i}:`, {
+          id: d.id,
+          group: d.group,
+          used: d.used,
+          isexternal: d.isexternal
+        });
+      }
+    });
+    console.groupEnd();
+  }
+  
   // Drag event handlers
   function dragstarted(event, d) {
     if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -1196,5 +1118,50 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Initialize the visualization
-  init();
+  initVisualization();
+});
+
+// Add direct filter event listeners
+window.addEventListener('DOMContentLoaded', function() {
+  console.log("Setting up direct filter listeners");
+  
+  // Node filters
+  document.querySelectorAll('.node-filter').forEach(filter => {
+    filter.addEventListener('change', function() {
+      console.log(`Node filter changed: ${this.value}=${this.checked}`);
+      if (typeof applyFilters === 'function') {
+        applyFilters();
+      }
+    });
+  });
+  
+  // Usage filters
+  document.getElementById('filter-used')?.addEventListener('change', function() {
+    console.log(`Used filter changed: ${this.checked}`);
+    if (typeof applyFilters === 'function') {
+      applyFilters();
+    }
+  });
+  
+  document.getElementById('filter-unused')?.addEventListener('change', function() {
+    console.log(`Unused filter changed: ${this.checked}`);
+    if (typeof applyFilters === 'function') {
+      applyFilters();
+    }
+  });
+  
+  // Library filters
+  document.getElementById('filter-internal')?.addEventListener('change', function() {
+    console.log(`Internal filter changed: ${this.checked}`);
+    if (typeof applyFilters === 'function') {
+      applyFilters();
+    }
+  });
+  
+  document.getElementById('filter-external')?.addEventListener('change', function() {
+    console.log(`External filter changed: ${this.checked}`);
+    if (typeof applyFilters === 'function') {
+      applyFilters();
+    }
+  });
 });
