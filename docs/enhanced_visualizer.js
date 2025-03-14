@@ -1147,6 +1147,13 @@ document.addEventListener('DOMContentLoaded', function() {
   function initializeFilters() {
     console.log("Initializing filters...");
     
+    // Make sure graph data is loaded
+    if (!graph || !graph.nodes || graph.nodes.length === 0) {
+      console.error("Cannot initialize filters - graph data not loaded yet");
+      setTimeout(initializeFilters, 500); // Retry after delay
+      return;
+    }
+    
     // Extract all namespaces from the graph
     const namespaces = new Set();
     
@@ -1169,6 +1176,9 @@ document.addEventListener('DOMContentLoaded', function() {
           
           if (namespaceNode) {
             namespaces.add(namespaceNode.id);
+          } else if (potentialNamespace) {
+            // Add the potential namespace even if it's not explicitly defined as a node
+            namespaces.add(potentialNamespace);
           }
         }
       }
@@ -1184,6 +1194,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (namespaceFiltersContainer) {
       // Clear loading placeholder
       namespaceFiltersContainer.innerHTML = '';
+      
+      if (sortedNamespaces.length === 0) {
+        namespaceFiltersContainer.innerHTML = '<div class="no-data">No namespaces found</div>';
+        return;
+      }
       
       // Add "Select All" checkbox
       const selectAllDiv = document.createElement('div');
@@ -1231,6 +1246,8 @@ document.addEventListener('DOMContentLoaded', function() {
         namespaceFiltersContainer.appendChild(div);
       });
       
+      console.log("Namespace filters initialized with", sortedNamespaces.length, "namespaces");
+      
       // Set up event listeners for namespace filters
       document.querySelectorAll('.namespace-filter').forEach(filter => {
         filter.addEventListener('change', () => {
@@ -1250,193 +1267,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         applyFilters();
       });
+    } else {
+      console.error("Namespace filters container not found in DOM");
     }
   }
-  
-  // Update the "Select All" checkbox based on individual checkbox states
+
+  // Helper function to update the state of the "Select All" checkbox
   function updateSelectAllCheckbox() {
-    const selectAllCheckbox = document.querySelector('.namespace-select-all');
     const namespaceCheckboxes = document.querySelectorAll('.namespace-filter');
+    const selectAllCheckbox = document.querySelector('.namespace-select-all');
     
     if (selectAllCheckbox && namespaceCheckboxes.length > 0) {
-      const allChecked = Array.from(namespaceCheckboxes).every(checkbox => checkbox.checked);
-      const someChecked = Array.from(namespaceCheckboxes).some(checkbox => checkbox.checked);
+      const checkedCount = document.querySelectorAll('.namespace-filter:checked').length;
       
-      selectAllCheckbox.checked = allChecked;
-      selectAllCheckbox.indeterminate = !allChecked && someChecked;
+      if (checkedCount === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+      } else if (checkedCount === namespaceCheckboxes.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+      } else {
+        selectAllCheckbox.indeterminate = true;
+      }
     }
-  }
-  
-  // Add CSS styles for proper visualization
-  function addStyles() {
-    const styleElement = document.createElement('style');
-    
-    styleElement.textContent = `
-      /* Node styling */
-      .node circle {
-        stroke: #fff;
-        stroke-width: 1.5px;
-      }
-      
-      .node.selected circle {
-        stroke: #ff0;
-        stroke-width: 3px;
-      }
-      
-      .node.hover circle {
-        stroke: #f80;
-        stroke-width: 2px;
-      }
-      
-      .node text {
-        font-family: sans-serif;
-        font-size: 10px;
-        pointer-events: none;
-        text-shadow: 0 1px 0 #000, 1px 0 0 #000, 0 -1px 0 #000, -1px 0 0 #000;
-        fill: white;
-      }
-      
-      /* Link styling */
-      .link {
-        stroke-opacity: 0.6;
-      }
-      
-      /* Highlighting */
-      .node.highlighted circle {
-        stroke: #ff0;
-        stroke-width: 3px;
-      }
-      
-      .node.connected circle {
-        stroke: #f80;
-        stroke-width: 2px;
-      }
-      
-      .node.faded {
-        opacity: 0.3;
-      }
-      
-      .link.faded {
-        opacity: 0.1;
-      }
-      
-      .link.highlighted {
-        stroke-width: 3px;
-        stroke-opacity: 1;
-      }
-      
-      /* Detail panel additional styling */
-      .node-info {
-        margin-bottom: 20px;
-        border: 1px solid #ddd;
-        padding: 10px;
-        border-radius: 4px;
-        background: #f8f8f8;
-      }
-      
-      .info-item {
-        margin: 5px 0;
-        display: flex;
-        align-items: center;
-      }
-      
-      .info-label {
-        font-weight: bold;
-        width: 80px;
-        color: #555;
-      }
-      
-      .info-value {
-        flex: 1;
-      }
-      
-      .connected-list {
-        list-style: none;
-        padding: 0;
-      }
-      
-      .connected-item {
-        padding: 8px;
-        margin: 5px 0;
-        border-radius: 4px;
-        background: #f5f5f5;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      
-      .connected-item:hover {
-        background: #e0e0e0;
-      }
-      
-      .relation-type {
-        font-weight: bold;
-        margin-right: 5px;
-        color: #666;
-      }
-      
-      .node-name {
-        color: #333;
-      }
-      
-      .used {
-        color: var(--used-color);
-      }
-      
-      .unused {
-        color: var(--unused-color);
-      }
-      
-      /* Namespace filter styles */
-      #namespace-filters {
-        max-height: 200px;
-        overflow-y: auto;
-        margin-bottom: 15px;
-        border: 1px solid #eee;
-        border-radius: 4px;
-        padding: 5px;
-      }
-      
-      .loading-placeholder {
-        font-style: italic;
-        color: #999;
-        text-align: center;
-        padding: 10px;
-      }
-      
-      .filter-item {
-        margin: 5px 0;
-      }
-      
-      .filter-item label {
-        display: flex;
-        align-items: center;
-      }
-      
-      .select-all {
-        font-weight: bold;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 5px;
-        margin-bottom: 8px;
-      }
-      
-      /* Reset button styling */
-      #reset-filters {
-        margin-left: 10px;
-        font-size: 0.7em;
-        padding: 3px 8px;
-        background: #f5f5f5;
-        border: 1px solid #ddd;
-        border-radius: 3px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      
-      #reset-filters:hover {
-        background: #e0e0e0;
-      }
-    `;
-    
-    document.head.appendChild(styleElement);
   }
   
   // Initialize the visualization
