@@ -40,9 +40,38 @@ namespace CodeAnalysisTool
         private readonly Dictionary<string, List<string>> _methodPropertyMap = new Dictionary<string, List<string>>();
         private readonly Dictionary<string, string> _variableTypeMap = new Dictionary<string, string>();
 
+        // Dictionary to store code locations
+        private readonly Dictionary<string, (string FilePath, int LineNumber)> _nodeLocations = 
+            new Dictionary<string, (string FilePath, int LineNumber)>();
+            
+        // Current file being processed
+        private string _currentFilePath = "";
+
         // Override to use custom parameters
         public CodeGraphWalker() : base(SyntaxWalkerDepth.Node)
         {
+        }
+
+        /// <summary>
+        /// Set the current file path before processing
+        /// </summary>
+        public void SetCurrentFile(string filePath)
+        {
+            _currentFilePath = filePath;
+        }
+
+        /// <summary>
+        /// Get location information for a syntax node
+        /// </summary>
+        private (string FilePath, int LineNumber) GetNodeLocation(SyntaxNode node)
+        {
+            if (node == null) return (_currentFilePath, 0);
+            
+            var location = node.GetLocation();
+            if (location == null) return (_currentFilePath, 0);
+            
+            var lineSpan = location.GetLineSpan();
+            return (_currentFilePath, lineSpan.StartLinePosition.Line + 1); // +1 because lines are 0-indexed
         }
 
         /// <summary>
@@ -83,49 +112,41 @@ namespace CodeAnalysisTool
         /// </summary>
         public override void VisitClassDeclaration(ClassDeclarationSyntax node)
         {
-            var className = node.Identifier.Text;
-            var fullClassName = string.IsNullOrEmpty(_currentNamespace)
-                ? className
-                : $"{_currentNamespace}.{className}";
-
-            _classNames.Add(fullClassName);
-
-            // If this is the Program class with Main method, mark it as used
-            if (className == "Program")
+            // Build fully qualified class name
+            if (!string.IsNullOrEmpty(_currentNamespace))
             {
-                foreach (var member in node.Members)
-                {
-                    if (member is MethodDeclarationSyntax method && method.Identifier.Text == "Main")
-                    {
-                        _usedClasses.Add(fullClassName);
-                        break;
-                    }
-                }
+                _currentClass = $"{_currentNamespace}.{node.Identifier.Text}";
             }
-
-            // If this class has a base class, record that relationship
+            else
+            {
+                _currentClass = node.Identifier.Text;
+            }
+            
+            // Add to the class names we're tracking
+            _classNames.Add(_currentClass);
+            
+            // Store location information
+            _nodeLocations[_currentClass] = GetNodeLocation(node);
+            
+            // Process base classes/interfaces
+            // Note: Base types include both base classes and interfaces
             if (node.BaseList != null)
             {
                 foreach (var baseType in node.BaseList.Types)
                 {
-                    if (SemanticModel != null)
+                    var baseTypeName = baseType.Type.ToString();
+                    
+                    // Mark base classes as used automatically 
+                    if (_classNames.Contains(baseTypeName))
                     {
-                        var typeInfo = SemanticModel.GetTypeInfo(baseType.Type);
-                        if (typeInfo.Type != null)
-                        {
-                            var baseClassName = BuildFullTypeName(typeInfo.Type);
-                            _usedClasses.Add(baseClassName);
-                        }
+                        _usedClasses.Add(baseTypeName);
                     }
                 }
             }
-
-            var prevClass = _currentClass;
-            _currentClass = fullClassName;
-
+            
             base.VisitClassDeclaration(node);
-
-            _currentClass = prevClass;
+            
+            _currentClass = null;
         }
 
         /// <summary>
@@ -134,92 +155,53 @@ namespace CodeAnalysisTool
         /// </summary>
         public override void VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
-            var methodName = node.Identifier.Text;
-            var fullMethodName = string.IsNullOrEmpty(_currentClass)
-                ? methodName
-                : $"{_currentClass}.{methodName}";
-
-            // Keep track of it
-            _methodFullNames.Add(fullMethodName);
-
-            // Check if this method overrides another method
-            bool isOverride = node.Modifiers.Any(m => m.ValueText == "override");
-            if (isOverride)
+            if (!string.IsNullOrEmpty(_currentClass))
             {
-                // An override method is implicitly used
-                _usedMethods.Add(fullMethodName);
+                _currentMethod = $"{_currentClass}.{node.Identifier.Text}";
+                _methodFullNames.Add(_currentMethod);
+                
+                // Store location information
+                _nodeLocations[_currentMethod] = GetNodeLocation(node);
+                
+                base.VisitMethodDeclaration(node);
+                
+                _currentMethod = null;
             }
-
-            // Special case for Main method - it's the entry point, so it's used
-            if (methodName == "Main")
+            else
             {
-                _usedMethods.Add(fullMethodName);
+                // Orphaned method (not in a class)
+                base.VisitMethodDeclaration(node);
             }
-
-            // Ensure there's an entry for calls from this method
-            if (!_methodCallMap.ContainsKey(fullMethodName))
-            {
-                _methodCallMap[fullMethodName] = new List<string>();
-            }
-
-            // Ensure there's an entry for property usage from this method
-            if (!_methodPropertyMap.ContainsKey(fullMethodName))
-            {
-                _methodPropertyMap[fullMethodName] = new List<string>();
-            }
-
-            // Update the "current method" context
-            var prevMethod = _currentMethod;
-            _currentMethod = fullMethodName;
-
-            base.VisitMethodDeclaration(node);
-
-            // Restore
-            _currentMethod = prevMethod;
         }
 
         public override void VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
-            if (SemanticModel == null)
+            if (!string.IsNullOrEmpty(_currentClass))
             {
-                base.VisitPropertyDeclaration(node);
-                return;
-            }
-
-            // e.g. public int MyProperty { get; set; }
-            // Build a "fully qualified" property name: "Namespace.Class.Property"
-            var propertyName = node.Identifier.Text;
-            var fullPropertyName = string.IsNullOrEmpty(_currentClass)
-                ? propertyName
-                : $"{_currentClass}.{propertyName}";
-
-            // Record property in our set
-            _propertyFullNames.Add(fullPropertyName);
-
-            // Check if this property overrides another property
-            bool isOverride = node.Modifiers.Any(m => m.ValueText == "override");
-            if (isOverride)
-            {
-                // An override property is implicitly used
-                _usedProperties.Add(fullPropertyName);
-            }
-
-            // Use semantic model to get the property type
-            var typeSymbol = SemanticModel.GetTypeInfo(node.Type).Type;
-            if (typeSymbol != null)
-            {
-                string typeFullName = BuildFullTypeName(typeSymbol);
+                string propertyName = node.Identifier.Text;
+                string fullPropertyName = $"{_currentClass}.{propertyName}";
+                _propertyFullNames.Add(fullPropertyName);
                 
-                // Mark this type as used
-                if (_classNames.Contains(typeFullName))
+                // Store location information
+                _nodeLocations[fullPropertyName] = GetNodeLocation(node);
+                
+                // Get type information
+                var typeSymbol = SemanticModel.GetTypeInfo(node.Type).Type;
+                if (typeSymbol != null)
                 {
-                    _usedClasses.Add(typeFullName);
-                }
+                    string typeFullName = BuildFullTypeName(typeSymbol);
+                    
+                    // If it's a type in our codebase, mark it as used
+                    if (_classNames.Contains(typeFullName))
+                    {
+                        _usedClasses.Add(typeFullName);
+                    }
 
-                // Record property->type
-                if (!_variableTypeMap.ContainsKey(fullPropertyName))
-                {
-                    _variableTypeMap[fullPropertyName] = typeFullName;
+                    // Record property->type
+                    if (!_variableTypeMap.ContainsKey(fullPropertyName))
+                    {
+                        _variableTypeMap[fullPropertyName] = typeFullName;
+                    }
                 }
             }
             
@@ -229,17 +211,22 @@ namespace CodeAnalysisTool
         // 1) Local variables
         public override void VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
-            if (SemanticModel == null || string.IsNullOrEmpty(_currentMethod))
+            // Skip if we're not in a method context
+            if (string.IsNullOrEmpty(_currentMethod))
             {
                 base.VisitLocalDeclarationStatement(node);
                 return;
             }
-
+            
+            // Process each variable in the declaration
             foreach (var variable in node.Declaration.Variables)
             {
                 string variableName = variable.Identifier.Text;
                 string fullVariableName = $"{_currentMethod}.{variableName}";
                 _variableFullNames.Add(fullVariableName);
+                
+                // Store location information
+                _nodeLocations[fullVariableName] = GetNodeLocation(node);
 
                 // Get type information
                 var typeSymbol = SemanticModel.GetTypeInfo(node.Declaration.Type).Type;
@@ -247,7 +234,7 @@ namespace CodeAnalysisTool
                 {
                     string typeFullName = BuildFullTypeName(typeSymbol);
                     
-                    // Mark this type as used if it's one of our classes
+                    // If it's a type in our codebase, mark it as used
                     if (_classNames.Contains(typeFullName))
                     {
                         _usedClasses.Add(typeFullName);
@@ -263,33 +250,36 @@ namespace CodeAnalysisTool
         // 2) Field variables
         public override void VisitFieldDeclaration(FieldDeclarationSyntax node)
         {
-            if (SemanticModel == null || string.IsNullOrEmpty(_currentClass))
+            if (!string.IsNullOrEmpty(_currentClass))
             {
-                base.VisitFieldDeclaration(node);
-                return;
-            }
-
-            // Get the type of field
-            var typeSymbol = SemanticModel.GetTypeInfo(node.Declaration.Type).Type;
-            if (typeSymbol != null)
-            {
-                string typeFullName = BuildFullTypeName(typeSymbol);
+                // Get the field type information
+                var typeSymbol = SemanticModel.GetTypeInfo(node.Declaration.Type).Type;
+                string typeFullName = null;
                 
-                // Mark this type as used if it's one of our classes
-                if (_classNames.Contains(typeFullName))
+                if (typeSymbol != null)
                 {
-                    _usedClasses.Add(typeFullName);
+                    typeFullName = BuildFullTypeName(typeSymbol);
+                    
+                    // Track the class of the field type as "used"
+                    if (_classNames.Contains(typeFullName))
+                    {
+                        _usedClasses.Add(typeFullName);
+                    }
                 }
                 
+                // Process each field in the declaration
                 foreach (var variable in node.Declaration.Variables)
                 {
                     string variableName = variable.Identifier.Text;
                     string fullVariableName = $"{_currentClass}.{variableName}";
                     _variableFullNames.Add(fullVariableName);
                     _variableTypeMap[fullVariableName] = typeFullName;
+                    
+                    // Store location information
+                    _nodeLocations[fullVariableName] = GetNodeLocation(node);
                 }
             }
-
+            
             base.VisitFieldDeclaration(node);
         }
 
@@ -662,10 +652,10 @@ namespace CodeAnalysisTool
                     Id = ns,
                     Group = "namespace",
                     Label = ns,
-                    Used = true // Namespaces are always considered "used"
+                    Used = true // Namespaces are always "used"
                 });
             }
-
+            
             // 2) Add class nodes
             foreach (var cls in _classNames)
             {
@@ -674,10 +664,12 @@ namespace CodeAnalysisTool
                     Id = cls,
                     Group = "class",
                     Label = cls.Split('.').Last(),
-                    Used = _usedClasses.Contains(cls)
+                    Used = _usedClasses.Contains(cls),
+                    FilePath = _nodeLocations.ContainsKey(cls) ? _nodeLocations[cls].FilePath : "",
+                    LineNumber = _nodeLocations.ContainsKey(cls) ? _nodeLocations[cls].LineNumber : 0
                 });
             }
-
+            
             // 3) Add method nodes
             foreach (var method in _methodFullNames)
             {
@@ -686,31 +678,53 @@ namespace CodeAnalysisTool
                     Id = method,
                     Group = "method",
                     Label = method.Split('.').Last(),
-                    Used = _usedMethods.Contains(method)
+                    Used = _usedMethods.Contains(method),
+                    FilePath = _nodeLocations.ContainsKey(method) ? _nodeLocations[method].FilePath : "",
+                    LineNumber = _nodeLocations.ContainsKey(method) ? _nodeLocations[method].LineNumber : 0
                 });
             }
             
             // Add property nodes
             foreach (var prop in _propertyFullNames)
             {
+                // Try to get type info for this property
+                string typeInfo = "Unknown";
+                if (_variableTypeMap.ContainsKey(prop))
+                {
+                    typeInfo = _variableTypeMap[prop];
+                }
+                
                 graph.Nodes.Add(new D3Node
                 {
                     Id = prop,
                     Group = "property",
                     Label = prop.Split('.').Last(),
-                    Used = _usedProperties.Contains(prop)
+                    Used = _usedProperties.Contains(prop),
+                    Type = typeInfo,
+                    FilePath = _nodeLocations.ContainsKey(prop) ? _nodeLocations[prop].FilePath : "",
+                    LineNumber = _nodeLocations.ContainsKey(prop) ? _nodeLocations[prop].LineNumber : 0
                 });
             }
             
             // Add variable nodes
             foreach (var variable in _variableFullNames)
             {
+                // Try to get type info for this variable
+                string typeInfo = "Unknown";
+                if (_variableTypeMap.ContainsKey(variable))
+                {
+                    typeInfo = _variableTypeMap[variable];
+                }
+                
                 graph.Nodes.Add(new D3Node
                 {
                     Id = variable,
                     Group = "variable",
                     Label = variable.Split('.').Last(),
-                    Used = _usedVariables.Contains(variable)
+                    Used = _usedVariables.Contains(variable),
+                    Type = typeInfo,
+                    FilePath = _nodeLocations.ContainsKey(variable) ? _nodeLocations[variable].FilePath : "",
+                    LineNumber = _nodeLocations.ContainsKey(variable) ? _nodeLocations[variable].LineNumber : 0
                 });
             }
             
@@ -937,6 +951,9 @@ namespace CodeAnalysisTool
         public string Group { get; set; }
         public string Label { get; set; }
         public bool Used { get; set; } = false;
+        public string Type { get; set; } // e.g. 'int', 'string', 'MyCustomClass'
+        public string FilePath { get; set; } // File path where this element is defined
+        public int LineNumber { get; set; } // Line number in the file where this element is defined
     }
 
     public class D3Link

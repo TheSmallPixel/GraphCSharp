@@ -108,6 +108,11 @@ namespace CodeAnalysisTool
                     {
                         var model = compilation.GetSemanticModel(tree);
                         walker.SemanticModel = model;
+                        
+                        // Set the current file path for this syntax tree
+                        string filePath = tree.FilePath;
+                        walker.SetCurrentFile(filePath);
+                        
                         walker.Visit(tree.GetRoot());
                     }
                     catch (Exception ex)

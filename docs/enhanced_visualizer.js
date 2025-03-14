@@ -481,6 +481,21 @@ document.addEventListener('DOMContentLoaded', function() {
     fullNameEl.innerHTML = `<strong>Full Name:</strong> ${node.id}`;
     infoSection.appendChild(fullNameEl);
     
+    // Add data type information for variables and properties
+    if ((node.group === 'variable' || node.group === 'property') && node.type) {
+      const dataTypeEl = document.createElement('p');
+      dataTypeEl.innerHTML = `<strong>Data Type:</strong> <span class="data-type">${node.type}</span>`;
+      infoSection.appendChild(dataTypeEl);
+    }
+    
+    // Add file path and line number information if available
+    // Note: JSON property names are lowercase due to LowercaseNamingStrategy
+    if (node.filepath && node.linenumber > 0) {
+      const locationEl = document.createElement('p');
+      locationEl.innerHTML = `<strong>Location:</strong> ${node.filepath}:${node.linenumber}`;
+      infoSection.appendChild(locationEl);
+    }
+    
     const usageCount = nodeUsageCounts.get(node.id) || 0;
     const usageEl = document.createElement('p');
     usageEl.innerHTML = `<strong>Usage Count:</strong> ${usageCount} 
