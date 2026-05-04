@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build analyzer
+        run: dotnet build --configuration Release tools/CodeAnalysisTool/CodeAnalysisTool.csproj
+
+      - name: Build tests
+        run: dotnet build --configuration Release tools/CodeAnalysisTool.Tests/CodeAnalysisTool.Tests.csproj
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --logger "console;verbosity=normal" tools/CodeAnalysisTool.Tests/CodeAnalysisTool.Tests.csproj
