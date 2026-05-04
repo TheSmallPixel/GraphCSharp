@@ -1,0 +1,33 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+.vs/
+.vscode/
+
+# Build / test output
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor backups
+*.backup
+*.bak
+*~
+
+# Node (in case docs tooling is added)
+node_modules/
