@@ -6,8 +6,8 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace CodeAnalysisTool
 {
@@ -129,19 +129,14 @@ namespace CodeAnalysisTool
                 {
                     Directory.CreateDirectory(docsPath);
                     var outputFile = Path.Combine(docsPath, "graph.json");
-                    
-                    // Create settings specifying our custom naming strategy
-                    var settings = new JsonSerializerSettings
+
+                    var options = new JsonSerializerOptions
                     {
-                        // Use a DefaultContractResolver with our LowercaseNamingStrategy
-                        ContractResolver = new DefaultContractResolver
-                        {
-                            NamingStrategy = new LowercaseNamingStrategy()
-                        },
-                        Formatting = Formatting.Indented // for pretty printing
+                        PropertyNamingPolicy = new LowercaseNamingPolicy(),
+                        WriteIndented = true
                     };
-                    
-                    File.WriteAllText(outputFile, JsonConvert.SerializeObject(graph, settings));
+
+                    File.WriteAllText(outputFile, JsonSerializer.Serialize(graph, options));
                     Console.WriteLine($"Generated: {outputFile}");
                     
                     // Print some statistics
@@ -243,11 +238,8 @@ namespace CodeAnalysisTool
         }
     }
 
-    public class LowercaseNamingStrategy : NamingStrategy
+    public class LowercaseNamingPolicy : JsonNamingPolicy
     {
-        protected override string ResolvePropertyName(string name)
-        {
-            return name.ToLowerInvariant();
-        }
+        public override string ConvertName(string name) => name.ToLowerInvariant();
     }
 }

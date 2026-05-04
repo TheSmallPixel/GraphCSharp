@@ -5,12 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Roslyn compiler APIs for code analysis -->
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0" />
-    <!-- Analyzers for Roslyn (optional but often recommended). 
-         Set PrivateAssets to 'all' so they don't flow to consumers of your tool. -->
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3" PrivateAssets="all" />
-    <!-- Newtonsoft.Json to serialize your final D3 graph, if you're using that -->
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" PrivateAssets="all" />
   </ItemGroup>
 </Project>
