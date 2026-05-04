@@ -75,6 +75,7 @@ runs:
           echo "No changes to commit."
         else
           git commit -m "Update code graph JSON & index [skip ci]"
+          git pull --rebase origin "${GITHUB_REF#refs/heads/}"
           git push
         fi
       shell: bash
