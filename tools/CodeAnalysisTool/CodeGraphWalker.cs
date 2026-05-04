@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Newtonsoft.Json; // if you want to serialize the final graph
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -1004,67 +1003,6 @@ namespace CodeAnalysisTool
             }
 
             return propertySymbol.Name;
-        }
-    }
-
-    /// <summary>
-    /// Simple container for the final D3-based graph.
-    /// </summary>
-    public class D3Graph
-    {
-        public List<D3Node> Nodes { get; set; } = new List<D3Node>();
-        public List<D3Link> Links { get; set; } = new List<D3Link>();
-    }
-
-    public class D3Node
-    {
-        public string Id { get; set; }
-        public string Group { get; set; }
-        public string Label { get; set; }
-        public bool Used { get; set; } = false;
-        public string Type { get; set; } // e.g. 'int', 'string', 'MyCustomClass'
-        public string FilePath { get; set; } // File path where this element is defined
-        public int LineNumber { get; set; } // Line number in the file where this element is defined
-        public bool IsExternal { get; set; } = false; // Indicates if this node is from an external library
-    }
-
-    public class D3Link
-    {
-        public string Source { get; set; }
-        public string Target { get; set; }
-        public string Type { get; set; }
-    }
-    
-    /// <summary>
-    /// This is a test class with unused elements to verify the unused code detection
-    /// </summary>
-    public class UnusedElementsTest
-    {
-        // This property is never used anywhere - should be marked as unused
-        public string UnusedProperty { get; set; }
-        
-        // This is a used property - referenced in the UsedMethod below
-        public int UsedProperty { get; set; }
-        
-        // This method is never called - should be marked as unused
-        public void UnusedMethod()
-        {
-            Console.WriteLine("I'm never called!");
-        }
-        
-        // This method is used because it's called by TestMethod
-        public void UsedMethod()
-        {
-            // Reference the UsedProperty to mark it as used
-            int x = UsedProperty;
-            Console.WriteLine($"Using property: {x}");
-        }
-        
-        // This method calls UsedMethod - making it used
-        public void TestMethod()
-        {
-            // Call the UsedMethod to mark it as used
-            UsedMethod();
         }
     }
 }

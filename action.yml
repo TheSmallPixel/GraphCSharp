@@ -52,47 +52,16 @@ runs:
       run: |
         DOCS_DIR="${{ inputs.docs-dir }}"
         INDEX_FILE="${{ inputs.index-file }}"
-
         ACTION_REPO_DIR="${{ github.action_path }}"
         DEFAULT_INDEX="$ACTION_REPO_DIR/default_index.html"
         TARGET_FILE="${DOCS_DIR}/${INDEX_FILE}"
 
-        echo "docs-dir: $DOCS_DIR"
-        echo "index-file: $INDEX_FILE"
-        echo "Action path: $ACTION_REPO_DIR"
-        echo "Copying from: $DEFAULT_INDEX"
-        echo "Target file: $TARGET_FILE"
-
         if [ ! -f "$TARGET_FILE" ]; then
-          echo "No index file found in user repo. Copying default_index.html..."
+          echo "No index file found. Copying default visualizer..."
           mkdir -p "$(dirname "$TARGET_FILE")"
           cp "$DEFAULT_INDEX" "$TARGET_FILE"
-          
-          # Also copy enhanced visualization files if they exist in the action repo
-          ENHANCED_INDEX="$ACTION_REPO_DIR/docs/enhanced_index.html"
-          ENHANCED_JS="$ACTION_REPO_DIR/docs/enhanced_visualizer.js"
-          
-          if [ -f "$ENHANCED_INDEX" ]; then
-            echo "Copying enhanced visualization files..."
-            cp "$ENHANCED_INDEX" "${DOCS_DIR}/enhanced_index.html"
-            cp "$ENHANCED_JS" "${DOCS_DIR}/enhanced_visualizer.js"
-            echo "Enhanced visualization available at: ${DOCS_DIR}/enhanced_index.html"
-          fi
         else
           echo "Index file already exists. Not overwriting."
-          
-          # Still copy enhanced visualization if it doesn't exist
-          if [ ! -f "${DOCS_DIR}/enhanced_index.html" ]; then
-            ENHANCED_INDEX="$ACTION_REPO_DIR/docs/enhanced_index.html"
-            ENHANCED_JS="$ACTION_REPO_DIR/docs/enhanced_visualizer.js"
-            
-            if [ -f "$ENHANCED_INDEX" ]; then
-              echo "Copying enhanced visualization files..."
-              cp "$ENHANCED_INDEX" "${DOCS_DIR}/enhanced_index.html"
-              cp "$ENHANCED_JS" "${DOCS_DIR}/enhanced_visualizer.js"
-              echo "Enhanced visualization available at: ${DOCS_DIR}/enhanced_index.html"
-            fi
-          fi
         fi
       shell: bash
 
